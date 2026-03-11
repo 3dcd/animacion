@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<!--
+	NOTES:
+	1. All tokens are represented by '$' sign in the template.
+	2. You can write your code only wherever mentioned.
+	3. All occurrences of existing tokens will be replaced by their appropriate values.
+	4. Blank lines will be removed automatically.
+	5. Remove unnecessary comments before creating your template.
+-->
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="authoring-tool" content="Adobe_Animate_CC">
+<title>logo</title>
+
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #fcfcfc;
+  touch-action: none;
+}
+body {
+  display: grid;
+  place-items: center;
+}
+#animation_container {
+  position: relative;
+  width: 1080px !important;
+  height: 1920px !important;
+  background: #fcfcfc;
+}
+#canvas, #dom_overlay_container {
+  position: absolute !important;
+  inset: 0;
+  display: block;
+}
+#canvas {
+  background: #fcfcfc;
+}
+#dom_overlay_container {
+  pointer-events: none;
+  overflow: hidden;
+}
+</style>
+
+<!-- write your code here -->
+<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+<script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+function init() {
+	canvas = document.getElementById("canvas");
+	anim_container = document.getElementById("animation_container");
+	dom_overlay_container = document.getElementById("dom_overlay_container");
+	var comp=AdobeAn.getComposition("39F8F0FF24A14F9AA9E95CAB9BADA657");
+	var lib=comp.getLibrary();
+	handleComplete({},comp);
+}
+function handleComplete(evt,comp) {
+	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	exportRoot = new lib.logo();
+	stage = new lib.Stage(canvas);
+	createjs.Touch.enable(stage, true, false);
+	stage.enableMouseOver(0);	
+	//Registers the "tick" event listener.
+	fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+	}	    
+	//Code to support hidpi screens and responsive scaling.
+	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+	setupScrubControl(exportRoot, stage);
+}
+</script>
+<!-- write your code here -->
+
+<script>
+(function (cjs, an) {
+
+var p; // shortcut to reference prototypes
+var lib={};var ss={};var img={};
+lib.ssMetadata = [];
+
+
+(lib.AnMovieClip = function(){
+	this.actionFrames = [];
+	this.ignorePause = false;
+	this.gotoAndPlay = function(positionOrLabel){
+		cjs.MovieClip.prototype.gotoAndPlay.call(this,positionOrLabel);
+	}
+	this.play = function(){
+		cjs.MovieClip.prototype.play.call(this);
+	}
+	this.gotoAndStop = function(positionOrLabel){
+		cjs.MovieClip.prototype.gotoAndStop.call(this,positionOrLabel);
+	}
+	this.stop = function(){
+		cjs.MovieClip.prototype.stop.call(this);
+	}
+}).prototype = p = new cjs.MovieClip();
+// symbols:
+// helper functions:
+
+function mc_symbol_clone() {
+	var clone = this._cloneProps(new this.constructor(this.mode, this.startPosition, this.loop, this.reversed));
+	clone.gotoAndStop(this.currentFrame);
+	clone.paused = this.paused;
+	clone.framerate = this.framerate;
+	return clone;
+}
+
+function getMCSymbolPrototype(symbol, nominalBounds, frameBounds) {
+	var prototype = cjs.extend(symbol, cjs.MovieClip);
+	prototype.clone = mc_symbol_clone;
+	prototype.nominalBounds = nominalBounds;
+	prototype.frameBounds = frameBounds;
+	return prototype;
+	}
+
+
+(lib.Símbolo8 = function(mode,startPosition,loop,reversed) {
+if (loop == null) { loop = true; }
+if (reversed == null) { reversed = false; }
+	var props = new Object();
+	props.mode = mode;
+	props.startPosition = startPosition;
+	props.labels = {};
+	props.loop = loop;
+	props.reversed = reversed;
+	cjs.MovieClip.apply(this,[props]);
+
+	// Capa_1
+	this.shape = new cjs.Shape();
+	this.shape.graphics.f("#00FF00").s().p("AyySzQnynyAArBQAArAHynyQHynyLAAAQLBAAHyHyQHxHyABLAQgBLBnxHyQnyHxrBABQrAgBnynxg");
+	this.shape.setTransform(170.05,170.05);
+
+	this.timeline.addTween(cjs.Tween.get(this.shape).wait(1));
+
+	this._renderFirstFrame();
+
+}).prototype = getMCSymbolPrototype(lib.Símbolo8, new cjs.Rectangle(0,0,340.1,340.1), null);
+
+
+(lib.Símbolo7 = function(mode,startPosition,loop,reversed) {
+if (loop == null) { loop = true; }
+if (reversed == null) { reversed = false; }
+	var props = new Object();
+	props.mode = mode;
+	props.startPosition = startPosition;
+	props.labels = {};
+	props.loop = loop;
+	props.reversed = reversed;
+	cjs.MovieClip.apply(this,[props]);
+
+	// Capa_1
+	this.shape = new cjs.Shape();
+	this.shape.graphics.f("#0000FF").s().p("AymKoIAA1PMAlNAAAIAAVPg");
+	this.shape.setTransform(119.05,68);
+
+	this.shape_1 = new cjs.Shape();
+	this.shape_1.graphics.f("#0000FF").s().p("EhLoAKoIAA1PMCXRAAAIAAVPg");
+	this.shape_1.setTransform(484.125,68);
+
+	this.timeline.addTween(cjs.Tween.get({}).to({state:[{t:this.shape}]}).to({state:[{t:this.shape_1}]},3).wait(1));
+
+	this._renderFirstFrame();
+
+}).prototype = p = new cjs.MovieClip();
+p.nominalBounds = new cjs.Rectangle(0,0,968.3,136);
+
+
+// stage content:
+(lib.logo = function(mode,startPosition,loop,reversed) {
+if (loop == null) { loop = true; }
+if (reversed == null) { reversed = false; }
+	var props = new Object();
+	props.mode = mode;
+	props.startPosition = startPosition;
+	props.labels = {};
+	props.loop = loop;
+	props.reversed = reversed;
+	cjs.MovieClip.apply(this,[props]);
+
+	this.actionFrames = [0,99];
+	// timeline functions:
+	this.frame_0 = function() {
+		/* Detener en este fotograma
+		La línea de tiempo se detendrá/pausará en el fotograma en el que se inserte este código.
+		También se puede utilizar para detener/pausar la línea de tiempo de clips de película.
+		*/
+		
+		this.stop();
+	}
+	this.frame_99 = function() {
+		/* Detener en este fotograma
+		La línea de tiempo se detendrá/pausará en el fotograma en el que se inserte este código.
+		También se puede utilizar para detener/pausar la línea de tiempo de clips de película.
+		*/
+		
+		this.stop();
+	}
+
+	// actions tween:
+	this.timeline.addTween(cjs.Tween.get(this).call(this.frame_0).wait(99).call(this.frame_99).wait(1));
+
+	// Capa_1
+	this.instance = new lib.Símbolo7();
+	this.instance.setTransform(167.05,120.1,1,1,0,0,0,119,68);
+	new cjs.ButtonHelper(this.instance, 0, 1, 2, false, new lib.Símbolo7(), 3);
+
+	this.timeline.addTween(cjs.Tween.get(this.instance).to({y:1140.1},99).wait(1));
+
+	// Capa_2_copia
+	this.instance_1 = new lib.Símbolo8();
+	this.instance_1.setTransform(746.25,1152.2,1,1,0,0,0,170.1,170.1);
+
+	this.timeline.addTween(cjs.Tween.get(this.instance_1).to({y:1692.2},99).wait(1));
+
+	// Capa_2
+	this.instance_2 = new lib.Símbolo8();
+	this.instance_2.setTransform(746.25,812.2,1,1,0,0,0,170.1,170.1);
+
+	this.timeline.addTween(cjs.Tween.get(this.instance_2).to({y:232.2},99).wait(1));
+
+	this._renderFirstFrame();
+
+}).prototype = p = new lib.AnMovieClip();
+p.nominalBounds = new cjs.Rectangle(588.1,1012.1,328.19999999999993,850.1);
+// library properties:
+lib.properties = {
+	id: '39F8F0FF24A14F9AA9E95CAB9BADA657',
+	width: 1080,
+	height: 1920,
+	fps: 60,
+	color: "#FCFCFC",
+	opacity: 1.00,
+	manifest: [],
+	preloads: []
+};
+
+
+
+// bootstrap callback support:
+
+(lib.Stage = function(canvas) {
+	createjs.Stage.call(this, canvas);
+}).prototype = p = new createjs.Stage();
+
+p.setAutoPlay = function(autoPlay) {
+	this.tickEnabled = autoPlay;
+}
+p.play = function() { this.tickEnabled = true; this.getChildAt(0).gotoAndPlay(this.getTimelinePosition()) }
+p.stop = function(ms) { if(ms) this.seek(ms); this.tickEnabled = false; }
+p.seek = function(ms) { this.tickEnabled = true; this.getChildAt(0).gotoAndStop(lib.properties.fps * ms / 1000); }
+p.getDuration = function() { return this.getChildAt(0).totalFrames / lib.properties.fps * 1000; }
+
+p.getTimelinePosition = function() { return this.getChildAt(0).currentFrame / lib.properties.fps * 1000; }
+
+an.bootcompsLoaded = an.bootcompsLoaded || [];
+if(!an.bootstrapListeners) {
+	an.bootstrapListeners=[];
+}
+
+an.bootstrapCallback=function(fnCallback) {
+	an.bootstrapListeners.push(fnCallback);
+	if(an.bootcompsLoaded.length > 0) {
+		for(var i=0; i<an.bootcompsLoaded.length; ++i) {
+			fnCallback(an.bootcompsLoaded[i]);
+		}
+	}
+};
+
+an.compositions = an.compositions || {};
+an.compositions['39F8F0FF24A14F9AA9E95CAB9BADA657'] = {
+	getStage: function() { return exportRoot.stage; },
+	getLibrary: function() { return lib; },
+	getSpriteSheet: function() { return ss; },
+	getImages: function() { return img; }
+};
+
+an.compositionLoaded = function(id) {
+	an.bootcompsLoaded.push(id);
+	for(var j=0; j<an.bootstrapListeners.length; j++) {
+		an.bootstrapListeners[j](id);
+	}
+}
+
+an.getComposition = function(id) {
+	return an.compositions[id];
+}
+
+
+an.makeResponsive = function(isResp, respDim, isScale, scaleType, domContainers) {		
+	var lastW, lastH, lastS=1;		
+	window.addEventListener('resize', resizeCanvas);		
+	resizeCanvas();		
+	function resizeCanvas() {			
+		var w = lib.properties.width, h = lib.properties.height;			
+		var iw = window.innerWidth, ih=window.innerHeight;			
+		var pRatio = window.devicePixelRatio || 1, xRatio=iw/w, yRatio=ih/h, sRatio=1;			
+		if(isResp) {                
+			if((respDim=='width'&&lastW==iw) || (respDim=='height'&&lastH==ih)) {                    
+				sRatio = lastS;                
+			}				
+			else if(!isScale) {					
+				if(iw<w || ih<h)						
+					sRatio = Math.min(xRatio, yRatio);				
+			}				
+			else if(scaleType==1) {					
+				sRatio = Math.min(xRatio, yRatio);				
+			}				
+			else if(scaleType==2) {					
+				sRatio = Math.max(xRatio, yRatio);				
+			}			
+		}
+		domContainers[0].width = w * pRatio * sRatio;			
+		domContainers[0].height = h * pRatio * sRatio;
+		domContainers.forEach(function(container) {				
+			container.style.width = w * sRatio + 'px';				
+			container.style.height = h * sRatio + 'px';			
+		});
+		stage.scaleX = pRatio*sRatio;			
+		stage.scaleY = pRatio*sRatio;
+		lastW = iw; lastH = ih; lastS = sRatio;            
+		stage.tickOnUpdate = false;            
+		stage.update();            
+		stage.tickOnUpdate = true;		
+	}
+}
+an.handleSoundStreamOnTick = function(event) {
+	if(!event.paused){
+		var stageChild = stage.getChildAt(0);
+		if(!stageChild.paused || stageChild.ignorePause){
+			stageChild.syncStreamSounds();
+		}
+	}
+}
+an.handleFilterCache = function(event) {
+	if(!event.paused){
+		var target = event.target;
+		if(target){
+			if(target.filterCacheList){
+				for(var index = 0; index < target.filterCacheList.length ; index++){
+					var cacheInst = target.filterCacheList[index];
+					if((cacheInst.startFrame <= target.currentFrame) && (target.currentFrame <= cacheInst.endFrame)){
+						cacheInst.instance.cache(cacheInst.x, cacheInst.y, cacheInst.w, cacheInst.h);
+					}
+				}
+			}
+		}
+	}
+}
+
+
+})(createjs = createjs||{}, AdobeAn = AdobeAn||{});
+var createjs, AdobeAn;
+
+function setupScrubControl(root, stage) {
+  var handle = root.instance;
+  if (!handle) return;
+
+  var startY = 120.1;
+  var endY = 1140.1;
+  var totalFrames = Math.max(1, root.totalFrames - 1);
+
+  var currentY = handle.y;
+  var dragging = false;
+  var dragOffsetY = 0;
+  var velocityY = 0;
+  var lastStageY = currentY;
+  var lastSampleTime = 0;
+
+  // Cola corta: mantiene un poquito del impulso y frena más decidido
+  var inertiaFriction = 0.72;
+  var minVelocity = 0.10;
+
+  var hit = new createjs.Shape();
+  hit.graphics.beginFill("#000").drawRect(-420, -140, 1500, 320);
+  handle.hitArea = hit;
+  handle.cursor = "pointer";
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function syncToY(y) {
+    currentY = clamp(y, startY, endY);
+    var progress = (currentY - startY) / (endY - startY);
+    var frame = Math.round(progress * totalFrames);
+    root.gotoAndStop(frame);
+    stage.update();
+  }
+
+  // Arranca en el primer frame y primer estado
+  syncToY(startY);
+
+  handle.on("mousedown", function(evt) {
+    dragging = true;
+    velocityY = 0;
+    dragOffsetY = currentY - evt.stageY;
+    lastStageY = evt.stageY;
+    lastSampleTime = Date.now();
+  });
+
+  handle.on("pressmove", function(evt) {
+    if (!dragging) return;
+
+    var targetY = evt.stageY + dragOffsetY;
+    syncToY(targetY);
+
+    var now = Date.now();
+    var dt = Math.max(1, now - lastSampleTime);
+    var dy = evt.stageY - lastStageY;
+
+    // Toma la velocidad real del dedo para usarla SOLO al soltar
+    velocityY = (dy / dt) * 16.6667;
+
+    lastStageY = evt.stageY;
+    lastSampleTime = now;
+  });
+
+  function releaseDrag() {
+    dragging = false;
+  }
+
+  handle.on("pressup", releaseDrag);
+  stage.on("stagemouseup", releaseDrag);
+
+  createjs.Ticker.on("tick", function() {
+    if (dragging) return;
+    if (Math.abs(velocityY) < minVelocity) return;
+
+    var nextY = currentY + velocityY;
+
+    if (nextY <= startY || nextY >= endY) {
+      nextY = clamp(nextY, startY, endY);
+      velocityY = 0;
+    } else {
+      velocityY *= inertiaFriction;
+    }
+
+    syncToY(nextY);
+  });
+}
+</script>
+
+</head>
+<body onload="init();" style="margin:0px;">
+	<div id="animation_container" style="background-color:rgba(252, 252, 252, 1.00); width:1080px; height:1920px">
+		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(252, 252, 252, 1.00);"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
+		</div>
+	</div>
+</body>
+</html>
