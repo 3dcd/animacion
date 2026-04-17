@@ -4,66 +4,90 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="authoring-tool" content="Adobe_Animate_CC">
-<title>motor_centrado_mobile</title>
+<title>xxx_mobile_unico_centrado</title>
 <style>
-html, body {
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:#000;
-  touch-action:manipulation;
-  -webkit-user-select:none;
-  user-select:none;
-}
-body {
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#animation_container {
-  position:absolute;
-  inset:0;
-  margin:auto;
-  width:1080px;
-  height:1920px;
-  background:#000;
-  contain:layout paint size style;
-  transform:translateZ(0);
-  backface-visibility:hidden;
-}
-#canvas {
-  position:absolute;
-  display:block;
-  background:#000;
-}
-#dom_overlay_container {
-  pointer-events:none;
-  overflow:hidden;
-  width:1080px;
-  height:1920px;
-  position:absolute;
-  left:0;
-  top:0;
-  display:block;
-}
-#error_box {
-  display:none;
-  position:fixed;
-  left:50%;
-  bottom:5vh;
-  transform:translateX(-50%);
-  width:min(86vw, 720px);
-  padding:14px 16px;
-  border-radius:14px;
-  background:rgba(16,16,16,.88);
-  color:#fff;
-  font:14px/1.35 Arial, sans-serif;
-  text-align:center;
-  box-shadow:0 10px 30px rgba(0,0,0,.35);
-}
+  :root {
+    --stage-w: 1080;
+    --stage-h: 1920;
+  }
+
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  body {
+    position: relative;
+    font-family: Arial, sans-serif;
+  }
+
+  #viewport {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: #000;
+  }
+
+  #animation_container {
+    position: absolute;
+    width: calc(var(--stage-w) * 1px);
+    height: calc(var(--stage-h) * 1px);
+    transform-origin: center center;
+    will-change: transform;
+    contain: layout paint size style;
+    background: #000;
+  }
+
+  #canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: block;
+    width: calc(var(--stage-w) * 1px);
+    height: calc(var(--stage-h) * 1px);
+    background: #000;
+  }
+
+  #dom_overlay_container {
+    pointer-events: none;
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: calc(var(--stage-w) * 1px);
+    height: calc(var(--stage-h) * 1px);
+    display: block;
+  }
+
+  #fallback {
+    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    width: min(88vw, 760px);
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(20,20,20,.92);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.35;
+    text-align: center;
+    box-shadow: 0 10px 28px rgba(0,0,0,.35);
+  }
 </style>
+
+<!-- Runtime externo: es la única dependencia que no vino en el export -->
 <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+
 <script>
 (function (cjs, an) {
 
@@ -2109,16 +2133,28 @@ an.handleFilterCache = function(event) {
 })(createjs = createjs||{}, AdobeAn = AdobeAn||{});
 var createjs, AdobeAn;
 </script>
+
 <script>
 var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
-var bootErrorTimer = null;
+var STAGE_W = 1080, STAGE_H = 1920;
 
-function showError(msg) {
-  var box = document.getElementById('error_box');
-  if (box) {
-    box.style.display = 'block';
-    box.innerHTML = msg;
-  }
+function fitStage() {
+  var vw = window.innerWidth || document.documentElement.clientWidth || STAGE_W;
+  var vh = window.innerHeight || document.documentElement.clientHeight || STAGE_H;
+  var scale = Math.min(vw / STAGE_W, vh / STAGE_H);
+
+  if (!isFinite(scale) || scale <= 0) scale = 1;
+
+  var x = Math.round((vw - STAGE_W * scale) * 0.5);
+  var y = Math.round((vh - STAGE_H * scale) * 0.5);
+
+  anim_container.style.transform = "translate(" + x + "px," + y + "px) scale(" + scale + ")";
+}
+
+function showFallback(msg) {
+  var fb = document.getElementById("fallback");
+  fb.textContent = msg;
+  fb.style.display = "block";
 }
 
 function init() {
@@ -2126,22 +2162,21 @@ function init() {
   anim_container = document.getElementById("animation_container");
   dom_overlay_container = document.getElementById("dom_overlay_container");
 
-  bootErrorTimer = setTimeout(function(){
-    if (!window.createjs) {
-      showError("No se pudo cargar CreateJS desde internet. El HTML ya tiene tu JS y el atlas embebidos, pero sigue dependiendo de esa librería externa.");
-    }
-  }, 3200);
+  fitStage();
 
-  if (!window.createjs || !window.AdobeAn) return;
+  if (!window.createjs || !window.AdobeAn) {
+    showFallback("No se pudo cargar CreateJS. Este HTML tiene todo embebido salvo esa librería externa.");
+    return;
+  }
 
   var comp = AdobeAn.getComposition("C6655253AB6D443D8E6AC0BC555735F8");
   var lib = comp.getLibrary();
   var loader = new createjs.LoadQueue(false);
 
-  loader.addEventListener("fileload", function(evt){ handleFileLoad(evt, comp); });
-  loader.addEventListener("complete", function(evt){ handleComplete(evt, comp); });
-  loader.addEventListener("error", function(){
-    showError("Hubo un problema cargando el atlas embebido.");
+  loader.addEventListener("fileload", function(evt) { handleFileLoad(evt, comp); });
+  loader.addEventListener("complete", function(evt) { handleComplete(evt, comp); });
+  loader.addEventListener("error", function() {
+    showFallback("Hubo un problema cargando el atlas embebido.");
   });
 
   loader.loadManifest(lib.properties.manifest);
@@ -2155,8 +2190,6 @@ function handleFileLoad(evt, comp) {
 }
 
 function handleComplete(evt, comp) {
-  clearTimeout(bootErrorTimer);
-
   var lib = comp.getLibrary();
   var ss = comp.getSpriteSheet();
   var queue = evt.target;
@@ -2172,13 +2205,15 @@ function handleComplete(evt, comp) {
   exportRoot = new lib.xxx();
   stage = new lib.Stage(canvas);
 
-  // alivio de móvil
-  var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  // alivio para móvil
+  var isTouch = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
   if (isTouch) {
     lib.properties.fps = Math.min(lib.properties.fps || 60, 30);
-    stage.enableMouseOver(0);
-  } else {
-    stage.enableMouseOver();
+  }
+
+  // Evita trabajo innecesario en móvil
+  if (!isTouch) {
+    stage.enableMouseOver(10);
   }
 
   fnStartAnimation = function() {
@@ -2188,19 +2223,26 @@ function handleComplete(evt, comp) {
     createjs.Ticker.addEventListener("tick", stage);
   };
 
-  AdobeAn.makeResponsive(true, 'both', false, 1, [canvas, anim_container, dom_overlay_container]);
   AdobeAn.compositionLoaded(lib.properties.id);
   fnStartAnimation();
+  fitStage();
 }
 
-window.addEventListener('load', init);
+window.addEventListener("load", init, { passive: true });
+window.addEventListener("resize", fitStage, { passive: true });
+window.addEventListener("orientationchange", function() {
+  setTimeout(fitStage, 60);
+}, { passive: true });
 </script>
 </head>
 <body>
-  <div id="animation_container">
-    <canvas id="canvas" width="1080" height="1920"></canvas>
-    <div id="dom_overlay_container"></div>
+  <div id="viewport">
+    <div id="animation_container">
+      <canvas id="canvas" width="1080" height="1920"></canvas>
+      <div id="dom_overlay_container"></div>
+    </div>
   </div>
-  <div id="error_box"></div>
+
+  <div id="fallback"></div>
 </body>
 </html>
