@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<!--
+	NOTES:
+	1. All tokens are represented by '$' sign in the template.
+	2. You can write your code only wherever mentioned.
+	3. All occurrences of existing tokens will be replaced by their appropriate values.
+	4. Blank lines will be removed automatically.
+	5. Remove unnecessary comments before creating your template.
+-->
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="authoring-tool" content="Adobe_Animate_CC">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>lupa</title>
+<!-- write your code here -->
+<style>
+	html, body {
+		margin:0;
+		padding:0;
+		width:100%;
+		height:100%;
+		overflow:hidden;
+		background:#fcfaf3;
+		touch-action:none;
+	}
+
+	#animation_container {
+		position:fixed;
+		left:50%;
+		top:50%;
+		transform:translate(-50%, -50%);
+	}
+
+	#canvas {
+		touch-action:none;
+	}
+</style>
+<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+<script src="lupa.js"></script>
+<script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+function init() {
+	canvas = document.getElementById("canvas");
+	anim_container = document.getElementById("animation_container");
+	dom_overlay_container = document.getElementById("dom_overlay_container");
+	var comp=AdobeAn.getComposition("1C8C71D27B8B42A4A7CE3C624A800C20");
+	var lib=comp.getLibrary();
+	var loader = new createjs.LoadQueue(false);
+	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
+	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
+	var lib=comp.getLibrary();
+	loader.loadManifest(lib.properties.manifest);
+}
+function handleFileLoad(evt, comp) {
+	var images=comp.getImages();	
+	if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }	
+}
+function handleComplete(evt,comp) {
+	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	var queue = evt.target;
+	var ssMetadata = lib.ssMetadata;
+	for(i=0; i<ssMetadata.length; i++) {
+		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
+	}
+	exportRoot = new lib.lupa();
+	stage = new lib.Stage(canvas);
+	createjs.Touch.enable(stage);
+	stage.mouseMoveOutside = true;
+	//Registers the "tick" event listener.
+	fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+	}	    
+	//Code to support hidpi screens and responsive scaling.
+	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+	instalarLupaInteractiva();
+}
+
+function instalarLupaInteractiva() {
+	var iniciado = false;
+
+	function buscarLupa() {
+		if (!exportRoot || !stage || iniciado) return;
+
+		// Animate crea la lupa y el cuerpo recién cuando llegan a escena (_off:false).
+		// Por eso NO espero tiempo extra: apenas existen, activo arrastre y movimiento.
+		if (!exportRoot.marco || !exportRoot.cuerpo || !exportRoot.cuerpo.mask) return;
+		if (exportRoot.marco._off || exportRoot.cuerpo._off) return;
+
+		iniciado = true;
+		activarLupa(exportRoot, stage);
+		createjs.Ticker.removeEventListener("tick", buscarLupa);
+	}
+
+	createjs.Ticker.addEventListener("tick", buscarLupa);
+}
+
+function activarLupa(root, stageRef) {
+	var marco = root.marco;
+	var cuerpo = root.cuerpo;
+	var mascara = cuerpo.mask;
+
+	var baseMarcoX = marco.x;
+	var baseMarcoY = marco.y;
+	var baseMaskX = mascara.x;
+	var baseMaskY = mascara.y;
+
+	var x = marco.x;
+	var y = marco.y;
+	var targetX = x;
+	var targetY = y;
+	var arrastrando = false;
+	var fueTocada = false;
+	var tiempo = 0;
+
+	// Entrada más sutil: corto cualquier tween que haya quedado de Animate
+	// y hago un fade suave, sin parpadeo. La interacción ya queda activa.
+	createjs.Tween.removeTweens(marco);
+	createjs.Tween.removeTweens(cuerpo);
+	marco.alpha = 0.08;
+	cuerpo.alpha = 0.08;
+	createjs.Tween.get(marco).to({alpha: 1}, 520, createjs.Ease.sineOut);
+	createjs.Tween.get(cuerpo).to({alpha: 1}, 520, createjs.Ease.sineOut);
+
+	function limitar(v, min, max) {
+		return Math.max(min, Math.min(max, v));
+	}
+
+	function puntoDeEvento(evt) {
+		return root.globalToLocal(evt.stageX, evt.stageY);
+	}
+
+	function moverObjetos(nx, ny) {
+		marco.x = nx;
+		marco.y = ny;
+		mascara.x = baseMaskX + (nx - baseMarcoX);
+		mascara.y = baseMaskY + (ny - baseMarcoY);
+	}
+
+	function definirObjetivoDesdeEvento(evt) {
+		var p = puntoDeEvento(evt);
+		targetX = limitar(p.x, 150, 930);
+		targetY = limitar(p.y, 180, 1740);
+	}
+
+	stageRef.on("stagemousedown", function(evt) {
+		arrastrando = true;
+		fueTocada = true;
+		definirObjetivoDesdeEvento(evt);
+	});
+
+	stageRef.on("stagemousemove", function(evt) {
+		if (!arrastrando) return;
+		definirObjetivoDesdeEvento(evt);
+	});
+
+	stageRef.on("stagemouseup", function(evt) {
+		if (arrastrando) {
+			definirObjetivoDesdeEvento(evt);
+		}
+		arrastrando = false;
+		// Queda donde la soltás: no vuelve sola al centro.
+	});
+
+	createjs.Ticker.addEventListener("tick", function(event) {
+		var delta = event.delta || 16.67;
+		tiempo += delta / 1000;
+
+		// Antes de tocarla por primera vez, se mueve apenas sola para mostrar que es interactiva.
+		// Después de que la usás, queda en el lugar donde la dejaste.
+		if (!arrastrando && !fueTocada) {
+			targetX = baseMarcoX + Math.sin(tiempo * 0.9) * 44;
+			targetY = baseMarcoY + Math.cos(tiempo * 0.7) * 30;
+		}
+
+		// Seguimiento suave, pero suficientemente directo para que responda al dedo.
+		x += (targetX - x) * 0.30;
+		y += (targetY - y) * 0.30;
+		moverObjetos(x, y);
+	});
+}
+</script>
+<!-- write your code here -->
+</head>
+<body onload="init();" style="margin:0px;">
+	<div id="animation_container" style="background-color:rgba(252, 250, 243, 1.00); width:1080px; height:1920px">
+		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(252, 250, 243, 1.00);"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
+		</div>
+	</div>
+</body>
+</html>
