@@ -1,0 +1,10 @@
+Abrir demo_mapa_de_bit.html.
+
+Versión optimizada para celular:
+- Viewport fijo para evitar zoom/scroll accidental.
+- Escala responsive centrada usando visualViewport.
+- Pixel ratio limitado para mejorar fluidez en móviles.
+- Touch-action desactivado en canvas.
+- Lupa con radio de toque más grande.
+- Arrastre más directo y menos tosco.
+- Movimiento automático más sutil.
