@@ -1,7 +1,0 @@
-Abrir demo_mapa_de_bit.html.
-
-Cambios:
-- Mapadebits5 está exportado como PNG con transparencia simulada desde el archivo recibido.
-- Mapadebits4 está en PNG y ajustado al tamaño que espera Animate.
-- Se quitaron los ?cachebuster del manifest.
-- Se agregó aparición por alfa, demo automática e interacción de arrastre.
