@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<!--
+	NOTES:
+	1. All tokens are represented by '$' sign in the template.
+	2. You can write your code only wherever mentioned.
+	3. All occurrences of existing tokens will be replaced by their appropriate values.
+	4. Blank lines will be removed automatically.
+	5. Remove unnecessary comments before creating your template.
+-->
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="authoring-tool" content="Adobe_Animate_CC">
+<title>demo 3</title>
+<!-- write your code here -->
+<style>
+  html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#F5ECE1; touch-action:none; overscroll-behavior:none; }
+  canvas { touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  #animation_container {
+	position:absolute;
+	margin:auto;
+	left:0;right:0;
+	top:0;bottom:0;
+  }
+</style>
+<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+<script src="demo 3.js?1777936301614"></script>
+<script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+function init() {
+	canvas = document.getElementById("canvas");
+	anim_container = document.getElementById("animation_container");
+	dom_overlay_container = document.getElementById("dom_overlay_container");
+	var comp=AdobeAn.getComposition("645E201B47AF4D5688EB99C52C6EFA7B");
+	var lib=comp.getLibrary();
+	var loader = new createjs.LoadQueue(false);
+	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
+	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
+	var lib=comp.getLibrary();
+	loader.loadManifest(lib.properties.manifest);
+}
+function handleFileLoad(evt, comp) {
+	var images=comp.getImages();	
+	if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }	
+}
+
+function setupPabloInteraccion(root, stage) {
+    if (!root || root.__pabloInteraccionLista) return;
+    root.__pabloInteraccionLista = true;
+
+    var FRAME_SALIDA = 1039; // frame 1040 en Animate
+    var interacted = false;
+    var dragging = false;
+    var dragPoint = {x:0, y:0};
+
+    createjs.Touch.enable(stage, true, false);
+    stage.mouseMoveOutside = true;
+    if (stage.enableMouseOver) stage.enableMouseOver(10);
+
+    var maskShape = new createjs.Shape();
+    var MASK_R = 126;
+    maskShape.graphics.beginFill('#000').drawCircle(0, 0, MASK_R);
+
+    var dragProxy = new createjs.Shape();
+    dragProxy.graphics.beginFill('#000').drawCircle(0, 0, 210);
+    dragProxy.alpha = 0.01;
+    dragProxy.cursor = 'pointer';
+    dragProxy.name = 'drag_proxy_invisible';
+    root.addChild(dragProxy);
+
+    function exists(o){ return !!(o && !o._off); }
+
+    function syncMaskAndProxy() {
+        var lupa = root.lupa, marco = root.marco, rostro = root.rostro;
+        if (!lupa || !marco || !rostro) return;
+
+        // La lupa original se usa solo como referencia de posición; no debe verse.
+        lupa.visible = false;
+        rostro.mask = maskShape;
+
+        if (dragging) {
+            // Durante el drag congelamos el tween original y forzamos lupa + marco juntos.
+            createjs.Tween.removeTweens(lupa);
+            createjs.Tween.removeTweens(marco);
+            lupa._off = false; marco._off = false;
+            lupa.visible = false; marco.visible = true;
+            lupa.x = dragPoint.x; lupa.y = dragPoint.y;
+            marco.x = dragPoint.x; marco.y = dragPoint.y;
+        }
+
+        maskShape.x = lupa.x;
+        maskShape.y = lupa.y;
+        maskShape.scaleX = lupa.scaleX || 1;
+        maskShape.scaleY = lupa.scaleY || 1;
+
+        dragProxy.x = marco.x;
+        dragProxy.y = marco.y;
+        dragProxy.scaleX = 1;
+        dragProxy.scaleY = 1;
+
+        // Evita que el área invisible quede activa durante la parte final.
+        dragProxy.mouseEnabled = !interacted && exists(marco) && root.currentFrame < FRAME_SALIDA;
+        dragProxy.visible = dragProxy.mouseEnabled;
+
+        // Si hubo interacción, el final queda detenido para no reiniciar raro.
+        if (interacted && root.currentFrame >= root.totalFrames - 2) {
+            root.stop();
+            dragProxy.mouseEnabled = false;
+            dragProxy.visible = false;
+        }
+    }
+
+    function fadeOut(obj, ms) {
+        if (!obj || obj._off || obj.visible === false) return;
+        createjs.Tween.removeTweens(obj);
+        createjs.Tween.get(obj, {override:true})
+            .to({alpha:0}, ms || 450, createjs.Ease.quadOut)
+            .call(function(){ obj.visible = false; });
+    }
+
+    function ocultarGuiasSuave() {
+        // Globitos, manito y textos auxiliares. NO toca el título principal de arriba.
+        var nombres = ['instance','instance_1','instance_2','instance_3','instance_4','instance_5'];
+        nombres.forEach(function(n){ fadeOut(root[n], 520); });
+    }
+
+    function tomarControl(evt) {
+        if (interacted || root.currentFrame >= FRAME_SALIDA) return;
+        interacted = true;
+        dragging = true;
+        // Congela el timeline principal durante el arrastre para que la animación original
+        // no vuelva a pisar la posición del marco en cada tick.
+        if (root.stop) root.stop();
+        ocultarGuiasSuave();
+        var p = root.globalToLocal(evt.stageX, evt.stageY);
+        dragPoint.x = p.x; dragPoint.y = p.y;
+        if (root.lupa) {
+            createjs.Tween.removeTweens(root.lupa);
+            root.lupa._off = false;
+            root.lupa.visible = false;
+            root.lupa.x = p.x; root.lupa.y = p.y;
+            root.lupa.paused = true;
+        }
+        if (root.marco) {
+            createjs.Tween.removeTweens(root.marco);
+            root.marco._off = false;
+            root.marco.visible = true;
+            root.marco.alpha = 1;
+            root.marco.x = p.x; root.marco.y = p.y;
+            root.marco.paused = true;
+        }
+        dragProxy.mouseEnabled = true;
+    }
+
+    dragProxy.on('mousedown', tomarControl);
+    dragProxy.on('pressmove', function(evt) {
+        if (!dragging) return;
+        var p = root.globalToLocal(evt.stageX, evt.stageY);
+        dragPoint.x = p.x; dragPoint.y = p.y;
+        if (root.lupa) { root.lupa.x = p.x; root.lupa.y = p.y; root.lupa.paused = true; }
+        if (root.marco) { root.marco.x = p.x; root.marco.y = p.y; root.marco.visible = true; root.marco._off = false; root.marco.paused = true; }
+        // Fuerza render inmediato para que el marco acompañe a la lupa sin esperar al próximo tick.
+        if (stage && stage.update) stage.update(evt);
+        if (evt.nativeEvent && evt.nativeEvent.preventDefault) evt.nativeEvent.preventDefault();
+    });
+    dragProxy.on('pressup', function(evt) {
+        if (!dragging) return;
+        dragging = false;
+        dragProxy.mouseEnabled = false;
+        dragProxy.visible = false;
+        if (root.marco) root.marco.paused = false;
+        if (root.lupa) root.lupa.paused = false;
+        root.gotoAndPlay(FRAME_SALIDA);
+    });
+
+    createjs.Ticker.on('tick', syncMaskAndProxy);
+}
+
+function handleComplete(evt,comp) {
+	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	var queue = evt.target;
+	var ssMetadata = lib.ssMetadata;
+	for(i=0; i<ssMetadata.length; i++) {
+		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
+	}
+	exportRoot = new lib.demo3();
+	stage = new lib.Stage(canvas);	
+	//Registers the "tick" event listener.
+	fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+	}	    
+	//Code to support hidpi screens and responsive scaling.
+	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+	setupPabloInteraccion(exportRoot, stage);
+}
+</script>
+<!-- write your code here -->
+</head>
+<body onload="init();" style="margin:0px; overflow:hidden; background:#F5ECE1; touch-action:none;">
+	<div id="animation_container" style="background-color:rgba(245, 236, 225, 1.00); width:810px; height:1639px">
+		<canvas id="canvas" width="810" height="1639" style="position: absolute; display: block; background-color:rgba(245, 236, 225, 1.00);"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:810px; height:1639px; position: absolute; left: 0px; top: 0px; display: block;">
+		</div>
+	</div>
+</body>
+</html>
