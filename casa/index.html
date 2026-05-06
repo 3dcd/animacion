@@ -10,17 +10,11 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="authoring-tool" content="Adobe_Animate_CC">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>casa</title>
 <!-- write your code here -->
 <style>
-  html, body {
-    width:100%; height:100%; margin:0; padding:0; overflow:hidden; background:#000;
-    touch-action:none; overscroll-behavior:none; -webkit-user-select:none; user-select:none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  canvas { touch-action:none; -webkit-touch-callout:none; }
   #animation_container {
 	position:absolute;
 	margin:auto;
@@ -29,7 +23,7 @@
   }
 </style>
 <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
-<script src="casa.js?1778098625407"></script>
+<script src="casa.js?1778101498046"></script>
 <script>
 var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
 function init() {
@@ -39,6 +33,7 @@ function init() {
 	var comp=AdobeAn.getComposition("1214B6B5EC3848A7A25A5618AC420808");
 	var lib=comp.getLibrary();
 	var loader = new createjs.LoadQueue(false);
+	loader.installPlugin(createjs.Sound);
 	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
 	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
 	var lib=comp.getLibrary();
@@ -69,201 +64,197 @@ function handleComplete(evt,comp) {
 	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
 	AdobeAn.compositionLoaded(lib.properties.id);
 	fnStartAnimation();
+	setTimeout(iniciarExperienciaCasa, 80);
+}
+
+function playSound(id, loop, offset) {
+	return createjs.Sound.play(id, {'interrupt':createjs.Sound.INTERRUPT_EARLY, 'loop': loop, 'offset': offset});}
 
 
-// --- INTERACCION CASA: versión móvil suave + penumbra poseída ---
-(function(){
-  const casa = exportRoot.instance;
-  if(!casa) return;
+// --- AJUSTE MOBILE / ZOOM SUAVE / AUDIO AMBIENTE ---
+function iniciarExperienciaCasa() {
+	if (!exportRoot || exportRoot.__casaMobileInit) return;
+	exportRoot.__casaMobileInit = true;
 
-  // Activar touch real en CreateJS. Esto ayuda en celular/iPad.
-  try { createjs.Touch.enable(stage, true, false); } catch(e) {}
-  stage.mouseMoveOutside = true;
-  if(canvas){
-    canvas.style.touchAction = "none";
-    canvas.addEventListener("touchmove", e => e.preventDefault(), {passive:false});
-    canvas.addEventListener("touchstart", e => e.preventDefault(), {passive:false});
-  }
+	var root = exportRoot;
+	var casa = root.instance; // contenedor_casa exportado por Animate
+	if (!casa) return;
 
-  const BASE_X = 540, BASE_Y = 671, BASE_S = 0.8749;
+	// Evita scroll/gestos del navegador sobre el canvas.
+	canvas.style.touchAction = "none";
+	document.body.style.overflow = "hidden";
+	document.documentElement.style.overflow = "hidden";
 
-  const luces = [
-    casa.instance_3,  // puerta / zona baja
-    casa.instance_4,  // ventana
-    casa.instance_5,  // ventana
-    casa.instance_6,  // ático
-    casa.instance_7,  // lateral/patio
-    casa.instance_8,  // lateral/patio
-    casa.instance_9,  // horizonte
-    casa.instance_10  // parque/cercana
-  ].filter(Boolean);
+	// Nombre conceptual de cada luz según el export.
+	var luces = [
+		{mc:casa.instance_3, nombre:"ventana_1", base:0.00, max:1.00, tactil:1.25, peso:1.00},
+		{mc:casa.instance_4, nombre:"ventana_2", base:0.00, max:1.00, tactil:1.20, peso:0.95},
+		{mc:casa.instance_5, nombre:"puerta",    base:0.00, max:1.00, tactil:1.35, peso:1.15},
+		{mc:casa.instance_6, nombre:"atico",     base:0.00, max:1.00, tactil:1.40, peso:1.25},
+		{mc:casa.instance_7, nombre:"patio_1",   base:0.00, max:0.95, tactil:1.10, peso:0.85},
+		{mc:casa.instance_8, nombre:"patio_2",   base:0.00, max:0.95, tactil:1.10, peso:0.85},
+		{mc:casa.instance_9, nombre:"horizonte", base:0.00, max:0.75, tactil:0.75, peso:0.55},
+		{mc:casa.instance_10,nombre:"parque",    base:0.00, max:0.95, tactil:1.05, peso:0.75}
+	].filter(function(o){ return !!o.mc; });
 
-  luces.forEach(l => {
-    createjs.Tween.removeTweens(l);
-    l.alpha = 0;
-    l.visible = true;
-  });
+	// Al primer frame, absolutamente todo apagado.
+	luces.forEach(function(o){
+		o.mc.alpha = 0;
+		o.mc.visible = true;
+		o.mc.compositeOperation = "screen";
+	});
 
-  // Entrada desde negro: evita que se vean todas las luces al cargar.
-  const cortinaNegra = new createjs.Shape();
-  cortinaNegra.graphics.beginFill("#000000").drawRect(0,0,1080,1920);
-  cortinaNegra.alpha = 1;
-  exportRoot.addChild(cortinaNegra);
-  createjs.Tween.get(cortinaNegra)
-    .wait(220)
-    .to({alpha:0.34}, 1600, createjs.Ease.quadInOut)
-    .to({alpha:0}, 900, createjs.Ease.sineOut)
-    .call(()=> exportRoot.removeChild(cortinaNegra));
+	// Entrada desde penumbra: no muestra todas las luces de golpe.
+	var velo = new createjs.Shape();
+	velo.graphics.beginFill("#000000").drawRect(0,0,1080,1920);
+	velo.alpha = 1;
+	root.addChild(velo);
+	createjs.Tween.get(velo).wait(200).to({alpha:0.18}, 2600, createjs.Ease.quadOut).wait(700).to({alpha:0}, 2200, createjs.Ease.quadInOut);
 
-  let sistemaActivo = false;
-  let pointerActivo = false;
-  let targetX = BASE_X, targetY = BASE_Y, targetS = BASE_S;
-  let targetRot = 0;
-  let ultimaReaccion = 0;
-  let ultimoFlashDedo = 0;
-  let ultimaVibracion = 0;
-  let dragZoom = 0;
-  let dragZoomTarget = 0;
+	// Ajuste de cámara: zoom medio, lento, 5 segundos ida y 5 vuelta.
+	var baseX = casa.x, baseY = casa.y, baseSX = casa.scaleX, baseSY = casa.scaleY;
+	var touch = {down:false, x:540, y:960, targetZoom:1, zoom:1, panX:0, panY:0};
+	var MAX_ZOOM = 1.42;      // mitad de la versión anterior: se acerca, pero no se descontrola
+	var ZOOM_SPEED = 1/300;   // aprox. 5 segundos a 60fps para llegar al máximo
+	var PAN_MAX_X = 62;
+	var PAN_MAX_Y = 78;
 
-  setTimeout(()=>{ sistemaActivo = true; randomLuz(); }, 1200);
+	function vibrar(patron) {
+		try { if (navigator.vibrate) navigator.vibrate(patron); } catch(e) {}
+	}
+	function normalizar(evt) {
+		var rect = canvas.getBoundingClientRect();
+		var p = evt.touches && evt.touches.length ? evt.touches[0] : evt;
+		return {
+			x: (p.clientX - rect.left) * (1080 / rect.width),
+			y: (p.clientY - rect.top) * (1920 / rect.height)
+		};
+	}
+	function pointerDown(evt) {
+		evt.preventDefault();
+		var p = normalizar(evt);
+		touch.down = true; touch.x = p.x; touch.y = p.y; touch.targetZoom = MAX_ZOOM;
+		arrancarAudioAmbiente();
+		vibrar(18);
+	}
+	function pointerMove(evt) {
+		if (!touch.down) return;
+		evt.preventDefault();
+		var p = normalizar(evt);
+		touch.x = p.x; touch.y = p.y;
+	}
+	function pointerUp(evt) {
+		touch.down = false;
+		touch.targetZoom = 1;
+	}
+	canvas.addEventListener("pointerdown", pointerDown, {passive:false});
+	window.addEventListener("pointermove", pointerMove, {passive:false});
+	window.addEventListener("pointerup", pointerUp, {passive:false});
+	canvas.addEventListener("touchstart", pointerDown, {passive:false});
+	window.addEventListener("touchmove", pointerMove, {passive:false});
+	window.addEventListener("touchend", pointerUp, {passive:false});
 
-  function vibrar(patron){
-    const ahora = Date.now();
-    if(ahora - ultimaVibracion < 650) return;
-    ultimaVibracion = ahora;
-    if(navigator.vibrate){
-      try { navigator.vibrate(patron); } catch(e) {}
-    }
-  }
+	// Audio ambiental: fade in, loop con bajada al final y subida al reiniciar.
+	var audioAmb = null;
+	function arrancarAudioAmbiente() {
+		if (audioAmb) return;
+		audioAmb = new Audio("sounds/ScreenRecording_05062026180020_1_1.mp3");
+		audioAmb.preload = "auto";
+		audioAmb.loop = true;
+		audioAmb.volume = 0;
+		var prom = audioAmb.play();
+		if (prom && prom.catch) prom.catch(function(){ /* iOS puede exigir otro toque */ });
+		var fadeTimer = setInterval(function(){
+			if (!audioAmb || audioAmb.paused) return;
+			audioAmb.volume = Math.min(0.42, audioAmb.volume + 0.012);
+			if (audioAmb.volume >= 0.42) clearInterval(fadeTimer);
+		}, 120);
+		audioAmb.addEventListener("timeupdate", function(){
+			if (!audioAmb || !isFinite(audioAmb.duration) || audioAmb.duration < 8) return;
+			var quedan = audioAmb.duration - audioAmb.currentTime;
+			if (quedan < 4) {
+				// Se apaga un poco antes de volver a empezar, para que el loop no pegue un salto.
+				audioAmb.volume = Math.max(0.16, 0.16 + (quedan/4) * 0.26);
+			} else if (audioAmb.currentTime < 5) {
+				audioAmb.volume = Math.min(0.42, 0.16 + (audioAmb.currentTime/5) * 0.26);
+			} else if (!touch.down) {
+				audioAmb.volume += (0.36 - audioAmb.volume) * 0.025;
+			} else {
+				audioAmb.volume += (0.46 - audioAmb.volume) * 0.025;
+			}
+		});
+	}
 
-  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+	// Luces: comportamiento más natural, con respiración, sustos y reacción táctil.
+	function prenderLuz(o, intensidad, subida, duracion, bajada) {
+		if (!o || !o.mc) return;
+		createjs.Tween.removeTweens(o.mc);
+		var pico = Math.min(o.tactil || 1, intensidad * (o.max || 1));
+		createjs.Tween.get(o.mc)
+			.to({alpha:pico}, subida || 240, createjs.Ease.quadOut)
+			.wait(duracion || 500)
+			.to({alpha:0}, bajada || 900, createjs.Ease.quadInOut);
+	}
+	function elegir(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+	function cicloPoseido() {
+		var l = elegir(luces);
+		var esPrincipal = /ventana|puerta|atico/.test(l.nombre);
+		var intensidad = esPrincipal ? (0.85 + Math.random()*0.35) : (0.45 + Math.random()*0.45);
+		prenderLuz(l, intensidad, 80 + Math.random()*280, 180 + Math.random()*900, 450 + Math.random()*1200);
+		if (Math.random() < 0.28) {
+			setTimeout(function(){ prenderLuz(elegir(luces), 0.55 + Math.random()*0.45, 70, 100 + Math.random()*260, 380); }, 120 + Math.random()*460);
+		}
+		if (Math.random() < 0.18) vibrar([18,40,24]);
+		setTimeout(cicloPoseido, 550 + Math.random()*2200);
+	}
+	setTimeout(cicloPoseido, 2600);
 
-  function flash(mc, fuerza=1.25, tiempo=520){
-    if(!mc || !sistemaActivo) return;
-    createjs.Tween.removeTweens(mc);
-    mc.alpha = 0;
-    // Más impacto, pero con caída rápida para que no quede prendido como cartel.
-    const pico = clamp(fuerza, 0.95, 1.75);
-    createjs.Tween.get(mc)
-      .to({alpha:pico}, 55, createjs.Ease.quadOut)
-      .to({alpha:0.22}, 45)
-      .to({alpha:pico*0.92}, 60)
-      .wait(70 + Math.random()*160)
-      .to({alpha:0}, tiempo, createjs.Ease.quadIn);
-  }
+	createjs.Ticker.on("tick", function(){
+		// Zoom lento, sostenido mientras se mantiene el dedo.
+		var dz = touch.targetZoom - touch.zoom;
+		var paso = ZOOM_SPEED;
+		if (Math.abs(dz) > paso) touch.zoom += paso * (dz > 0 ? 1 : -1);
+		else touch.zoom = touch.targetZoom;
 
-  function pulsoLargo(mc){
-    if(!mc || !sistemaActivo) return;
-    createjs.Tween.removeTweens(mc);
-    mc.alpha = 0;
-    createjs.Tween.get(mc)
-      .to({alpha:1.05 + Math.random()*0.35}, 240, createjs.Ease.sineOut)
-      .wait(120 + Math.random()*280)
-      .to({alpha:0.55 + Math.random()*0.25}, 360, createjs.Ease.sineInOut)
-      .to({alpha:1.25 + Math.random()*0.35}, 90)
-      .to({alpha:0}, 900 + Math.random()*850, createjs.Ease.sineIn);
-  }
+		// El contenedor se mueve en sentido del dedo, como si la casa se acercara a la zona tocada.
+		var nx = (touch.x - 540) / 540;
+		var ny = (touch.y - 960) / 960;
+		var panObjetivoX = touch.down ? nx * PAN_MAX_X : 0;
+		var panObjetivoY = touch.down ? ny * PAN_MAX_Y : 0;
+		touch.panX += (panObjetivoX - touch.panX) * 0.055;
+		touch.panY += (panObjetivoY - touch.panY) * 0.055;
 
-  function randomLuz(){
-    if(!sistemaActivo) return;
-    const mc = luces[Math.floor(Math.random()*luces.length)];
-    if(Math.random() > 0.68) pulsoLargo(mc);
-    else flash(mc, 1.05 + Math.random()*0.55, 320 + Math.random()*760);
+		// Bamboleo mínimo para que no quede muerto.
+		var t = createjs.Ticker.getTicks();
+		var wobbleX = Math.sin(t*0.018) * 2.2;
+		var wobbleY = Math.cos(t*0.014) * 1.5;
 
-    // Ecos ocasionales, no constantes, para que en celular no se sienta saturado.
-    if(Math.random() > 0.60){
-      const extra = luces[Math.floor(Math.random()*luces.length)];
-      setTimeout(()=>flash(extra,1.25 + Math.random()*0.35,420), 120+Math.random()*420);
-    }
-    setTimeout(randomLuz, 620 + Math.random()*1550);
-  }
+		casa.scaleX = baseSX * touch.zoom;
+		casa.scaleY = baseSY * touch.zoom;
+		casa.x = baseX + touch.panX + wobbleX;
+		casa.y = baseY + touch.panY + wobbleY;
 
-  function normalizar(evt){
-    // En CreateJS, stageX/stageY ya vienen bastante normalizados por el stage.
-    // Igual los limitamos al tamaño lógico del export.
-    const x = clamp(evt.stageX || 540, 0, 1080);
-    const y = clamp(evt.stageY || 960, 0, 1920);
-    return { nx: (x/1080)-0.5, ny: (y/1920)-0.5 };
-  }
-
-  function actualizarObjetivo(evt){
-    if(!sistemaActivo) return;
-    const ahora = Date.now();
-    if(ahora - ultimaReaccion < 28) return; // throttle: menos tosco en celulares
-    ultimaReaccion = ahora;
-
-    const p = normalizar(evt);
-    const nx = p.nx, ny = p.ny;
-
-    // Movimiento más suave y controlado. Antes hacía Tween por cada move y eso podía sentirse pesado.
-    targetX = BASE_X + nx * 34;
-    targetY = BASE_Y + ny * 22;
-    // Zoom de exploración: mientras arrastrás, la casa se aproxima.
-    // No depende de un solo eje; subir/bajar o ir a los costados alimenta la sensación de acercamiento.
-    dragZoomTarget = 0.55 + Math.min(0.45, Math.abs(nx)*0.35 + Math.abs(ny)*0.40);
-    targetS = BASE_S + dragZoom;
-    targetRot = nx * 0.35 + ny * 0.10;
-
-    const distBorde = Math.max(Math.abs(nx), Math.abs(ny));
-    const desdeUltimoFlash = ahora - ultimoFlashDedo;
-    if(distBorde > 0.32 && desdeUltimoFlash > 620){
-      ultimoFlashDedo = ahora;
-      if(Math.abs(nx) > Math.abs(ny)){
-        flash(casa.instance_7,1.55,420);
-        setTimeout(()=>flash(casa.instance_8,1.38,480),90);
-      } else if(ny < 0){
-        flash(casa.instance_6,1.65,520);
-      } else {
-        flash(casa.instance_3,1.45,420);
-        if(Math.random()>0.55) flash(casa.instance_10,1.25,500);
-      }
-      if(distBorde > 0.42) vibrar([18,22,48]);
-    }
-  }
-
-  stage.on("stagemousedown", function(evt){
-    pointerActivo = true;
-    actualizarObjetivo(evt);
-    if(sistemaActivo){
-      flash(luces[Math.floor(Math.random()*luces.length)], 1.55, 420);
-      vibrar(28);
-    }
-  });
-  stage.on("stagemousemove", actualizarObjetivo);
-  stage.on("stagemouseup", function(){
-    pointerActivo = false;
-    targetX = BASE_X;
-    targetY = BASE_Y;
-    dragZoomTarget = 0;
-    targetS = BASE_S;
-    targetRot = 0;
-  });
-
-  createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
-  createjs.Ticker.on("tick", function(){
-    if(!sistemaActivo) return;
-    const t = Date.now();
-
-    // Lerp de cámara: más fluido que disparar Tweens a cada toque.
-    casa.x += (targetX - casa.x) * 0.075;
-    casa.y += (targetY - casa.y) * 0.075;
-    // Entrada/salida del zoom táctil: entra decidido, vuelve suave.
-    dragZoom += (dragZoomTarget - dragZoom) * (pointerActivo ? 0.14 : 0.055);
-    targetS = BASE_S + dragZoom;
-    casa.scaleX += (targetS - casa.scaleX) * (pointerActivo ? 0.11 : 0.06);
-    casa.scaleY += (targetS - casa.scaleY) * (pointerActivo ? 0.11 : 0.06);
-
-    const bamboleo = pointerActivo ? 0.10 : 0.22;
-    const rotNatural = Math.sin(t*0.00125)*bamboleo + Math.sin(t*0.0031)*0.05;
-    casa.rotation += ((targetRot + rotNatural) - casa.rotation) * 0.065;
-  });
-})();
-
+		// Cuando el dedo se acerca a sectores de la casa, las luces responden más fuerte.
+		if (touch.down) {
+			luces.forEach(function(o){
+				var b = o.mc.getTransformedBounds && o.mc.getTransformedBounds();
+				if (!b) return;
+				var cx = b.x + b.width/2, cy = b.y + b.height/2;
+				var dx = touch.x - cx, dy = touch.y - cy;
+				var dist = Math.sqrt(dx*dx + dy*dy);
+				var fuerza = Math.max(0, 1 - dist/430) * (o.peso || 1);
+				if (fuerza > 0.04) {
+					var objetivo = Math.min(o.tactil || 1, fuerza * 1.15);
+					o.mc.alpha += (objetivo - o.mc.alpha) * 0.08;
+				}
+			});
+		}
+	});
 }
 </script>
 <!-- write your code here -->
 </head>
-<body onload="init();" style="margin:0px; overflow:hidden; background:#000; touch-action:none;">
+<body onload="init();" style="margin:0px; background:#000; overflow:hidden; touch-action:none;">
 	<div id="animation_container" style="background-color:rgba(0, 0, 0, 1.00); width:1080px; height:1920px">
 		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(0, 0, 0, 1.00);"></canvas>
 		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">

@@ -451,6 +451,22 @@ if (reversed == null) { reversed = false; }
 	props.reversed = reversed;
 	cjs.MovieClip.apply(this,[props]);
 
+	this.actionFrames = [0];
+	this.isSingleFrame = false;
+	// timeline functions:
+	this.frame_0 = function() {
+		if(this.isSingleFrame) {
+			return;
+		}
+		if(this.totalFrames == 1) {
+			this.isSingleFrame = true;
+		}
+		// Sonido controlado por script mobile con fade/loop suave
+	}
+
+	// actions tween:
+	this.timeline.addTween(cjs.Tween.get(this).call(this.frame_0).wait(1));
+
 	// IMG_6042_PNG
 	this.instance = new lib.contenedor_casa();
 	this.instance.setTransform(540,671,0.8749,0.8749);
@@ -482,16 +498,17 @@ lib.properties = {
 	color: "#000000",
 	opacity: 1.00,
 	manifest: [
-		{src:"images/CachedBmp_1.png", id:"CachedBmp_1"},
-		{src:"images/casa_atlas_1.png", id:"casa_atlas_1"},
-		{src:"images/casa_atlas_2.png", id:"casa_atlas_2"},
-		{src:"images/casa_atlas_3.png", id:"casa_atlas_3"},
-		{src:"images/casa_atlas_4.png", id:"casa_atlas_4"},
-		{src:"images/casa_atlas_5.png", id:"casa_atlas_5"},
-		{src:"images/casa_atlas_6.png", id:"casa_atlas_6"},
-		{src:"images/casa_atlas_7.png", id:"casa_atlas_7"},
-		{src:"images/casa_atlas_8.png", id:"casa_atlas_8"},
-		{src:"images/casa_atlas_9.png", id:"casa_atlas_9"}
+		{src:"images/CachedBmp_1.png?1778101498044", id:"CachedBmp_1"},
+		{src:"images/casa_atlas_1.png?1778101498034", id:"casa_atlas_1"},
+		{src:"images/casa_atlas_2.png?1778101498034", id:"casa_atlas_2"},
+		{src:"images/casa_atlas_3.png?1778101498034", id:"casa_atlas_3"},
+		{src:"images/casa_atlas_4.png?1778101498034", id:"casa_atlas_4"},
+		{src:"images/casa_atlas_5.png?1778101498034", id:"casa_atlas_5"},
+		{src:"images/casa_atlas_6.png?1778101498034", id:"casa_atlas_6"},
+		{src:"images/casa_atlas_7.png?1778101498034", id:"casa_atlas_7"},
+		{src:"images/casa_atlas_8.png?1778101498034", id:"casa_atlas_8"},
+		{src:"images/casa_atlas_9.png?1778101498034", id:"casa_atlas_9"},
+		{src:"sounds/ScreenRecording_05062026180020_1_1.mp3?1778101498044", id:"ScreenRecording_05062026180020_1_1"}
 	],
 	preloads: []
 };
@@ -555,7 +572,7 @@ an.makeResponsive = function(isResp, respDim, isScale, scaleType, domContainers)
 	function resizeCanvas() {			
 		var w = lib.properties.width, h = lib.properties.height;			
 		var iw = window.innerWidth, ih=window.innerHeight;			
-		var pRatio = Math.min(window.devicePixelRatio || 1, 2), xRatio=iw/w, yRatio=ih/h, sRatio=1;			
+		var pRatio = window.devicePixelRatio || 1, xRatio=iw/w, yRatio=ih/h, sRatio=1;			
 		if(isResp) {                
 			if((respDim=='width'&&lastW==iw) || (respDim=='height'&&lastH==ih)) {                    
 				sRatio = lastS;                
