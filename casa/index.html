@@ -200,7 +200,7 @@ function handleComplete(evt,comp) {
     targetY = BASE_Y + ny * 22;
     // Zoom de exploración: mientras arrastrás, la casa se aproxima.
     // No depende de un solo eje; subir/bajar o ir a los costados alimenta la sensación de acercamiento.
-    dragZoomTarget = 0.075 + Math.min(0.035, Math.abs(nx)*0.030 + Math.abs(ny)*0.040);
+    dragZoomTarget = 0.55 + Math.min(0.45, Math.abs(nx)*0.35 + Math.abs(ny)*0.40);
     targetS = BASE_S + dragZoom;
     targetRot = nx * 0.35 + ny * 0.10;
 
@@ -248,10 +248,10 @@ function handleComplete(evt,comp) {
     casa.x += (targetX - casa.x) * 0.075;
     casa.y += (targetY - casa.y) * 0.075;
     // Entrada/salida del zoom táctil: entra decidido, vuelve suave.
-    dragZoom += (dragZoomTarget - dragZoom) * (pointerActivo ? 0.105 : 0.075);
+    dragZoom += (dragZoomTarget - dragZoom) * (pointerActivo ? 0.14 : 0.055);
     targetS = BASE_S + dragZoom;
-    casa.scaleX += (targetS - casa.scaleX) * 0.085;
-    casa.scaleY += (targetS - casa.scaleY) * 0.085;
+    casa.scaleX += (targetS - casa.scaleX) * (pointerActivo ? 0.11 : 0.06);
+    casa.scaleY += (targetS - casa.scaleY) * (pointerActivo ? 0.11 : 0.06);
 
     const bamboleo = pointerActivo ? 0.10 : 0.22;
     const rotNatural = Math.sin(t*0.00125)*bamboleo + Math.sin(t*0.0031)*0.05;
