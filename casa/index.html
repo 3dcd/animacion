@@ -29,6 +29,21 @@
     box-shadow:0 0 28px rgba(255,185,90,.18); max-width:78vw; line-height:1.25;
   }
   #start_button small { display:block; opacity:.72; font-size:12px; margin-top:8px; }
+
+  #sound_toggle {
+    position:fixed; top:14px; right:14px; z-index:9000;
+    min-width:44px; height:44px; border-radius:999px;
+    border:1px solid rgba(244,230,208,.55);
+    background:rgba(0,0,0,.48); color:#f4e6d0;
+    font-family:Arial, Helvetica, sans-serif; font-size:20px; line-height:1;
+    display:none; align-items:center; justify-content:center;
+    box-shadow:0 0 18px rgba(255,185,90,.18);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    touch-action:manipulation; user-select:none; -webkit-user-select:none;
+  }
+  #sound_toggle.is-muted { opacity:.72; color:#cfc3b2; }
+  #sound_toggle small { font-size:10px; margin-left:4px; letter-spacing:.3px; }
+
   #animation_container {
 	position:absolute;
 	margin:auto;
@@ -88,6 +103,8 @@ function handleComplete(evt,comp) {
 			startBtn.addEventListener("pointerdown", function(e){
 				if (e.cancelable) e.preventDefault();
 				if (typeof window.__startPabloCasaAudio === "function") window.__startPabloCasaAudio();
+				var st = document.getElementById("sound_toggle");
+				if (st) st.style.display = "flex";
 				createjs.Tween.get(overlay.style).wait(50);
 				overlay.style.transition = "opacity 900ms ease";
 				overlay.style.opacity = "0";
@@ -132,6 +149,7 @@ function setupPabloCasaInteractiva(){
 	var lastTime = createjs.Ticker.getTime();
 	var audioStarted = false;
 	var ambientSound = null;
+	var soundMuted = false;
 	var masterLightEnergy = 0;
 	window.__pabloExperienceStarted = false;
 
@@ -162,12 +180,39 @@ function setupPabloCasaInteractiva(){
 				volume:0
 			});
 			if (ambientSound) {
-				ambientSound.volume = 0.001;
-				createjs.Tween.get(ambientSound, {override:false}).to({volume:0.46}, 2600, createjs.Ease.sineInOut);
+				// El audio queda preparado, pero no invade: sube solo cuando hay dedo en pantalla.
+				ambientSound.volume = 0;
 			}
 		} catch(e) {}
 	}
 	window.__startPabloCasaAudio = startAmbientAudio;
+
+	function updateSoundButton(){
+		var btn = document.getElementById("sound_toggle");
+		if (!btn) return;
+		btn.innerHTML = soundMuted ? "🔇" : "🔊";
+		btn.classList.toggle("is-muted", soundMuted);
+	}
+	function toggleSound(evt){
+		if (evt && evt.cancelable) evt.preventDefault();
+		if (evt) evt.stopPropagation();
+		startAmbientAudio();
+		soundMuted = !soundMuted;
+		try {
+			if (ambientSound) {
+				createjs.Tween.removeTweens(ambientSound);
+				// El botón solo mutea/desmutea. El volumen real lo manda el dedo.
+				if (soundMuted) ambientSound.volume = 0;
+			}
+		} catch(e) {}
+		updateSoundButton();
+	}
+	var soundBtn = document.getElementById("sound_toggle");
+	if (soundBtn) {
+		soundBtn.addEventListener("pointerdown", toggleSound, {passive:false});
+		soundBtn.addEventListener("touchstart", toggleSound, {passive:false});
+		updateSoundButton();
+	}
 	function onDown(evt){
 		pointerDown = true;
 		var p = canvasPoint(evt); px = p.x; py = p.y;
@@ -252,10 +297,13 @@ function setupPabloCasaInteractiva(){
 			o.mc.alpha += (targetA - o.mc.alpha) * 0.055;
 		});
 
-		// Audio: si está sonando, que suba apenas con el toque y baje al soltar.
+		// Audio táctil sincronizado con el zoom:
+		// el volumen sigue la misma curva de 5 segundos que la cámara.
+		// Así no aparece de golpe: crece mientras entrás y se apaga mientras volvés.
 		if (ambientSound) {
-			var targetVol = pointerDown ? 0.52 : 0.36;
-			ambientSound.volume += (targetVol - ambientSound.volume) * 0.025;
+			var targetVol = soundMuted ? 0 : (0.88 * zEase);
+			ambientSound.volume += (targetVol - ambientSound.volume) * 0.16;
+			if (!pointerDown && zoomT <= 0.002 && ambientSound.volume < 0.01) ambientSound.volume = 0;
 		}
 	});
 }
@@ -266,7 +314,8 @@ function playSound(id, loop, offset) {
 <!-- write your code here -->
 </head>
 <body onload="init();" style="margin:0px; overflow:hidden; background:#000; touch-action:none; overscroll-behavior:none;">
-	<div id="start_overlay"><button id="start_button">Tocar para entrar en la casa<small>Activá el sonido y explorá la penumbra</small></button></div>
+	<div id="start_overlay"><button id="start_button">Tocar para entrar en la casa<small>Activá el sonido: mantené tocado para escucharla</small></button></div>
+	<button id="sound_toggle" aria-label="Activar o apagar sonido" title="Sonido">🔊</button>
 	<div id="animation_container" style="background-color:rgba(0, 0, 0, 1.00); width:1080px; height:1920px">
 		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(0, 0, 0, 1.00);"></canvas>
 		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
