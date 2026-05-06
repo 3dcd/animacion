@@ -222,12 +222,12 @@ function setupPabloCasaInteractiva(){
 		var zEase = easeInOut(zoomT);
 		var scale = 1 + MAX_ZOOM * zEase;
 
-		// Movimiento más presente: como cabeza/cámara que busca el dedo.
+		// Movimiento repelente: el dedo empuja la casa en sentido contrario, como imán negativo.
 		var nx = (px - W/2) / (W/2);
 		var ny = (py - H/2) / (H/2);
 		var follow = pointerDown ? 1 : zEase;
-		var targetX = baseX + nx * 92 * follow;
-		var targetY = baseY + ny * 128 * follow;
+		var targetX = baseX - nx * 92 * follow;
+		var targetY = baseY - ny * 128 * follow;
 		var targetSX = baseSX * scale;
 		var targetSY = baseSY * scale;
 
