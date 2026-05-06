@@ -10,11 +10,13 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="authoring-tool" content="Adobe_Animate_CC">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>casa</title>
 <!-- write your code here -->
 <style>
+  html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-action:none; overscroll-behavior:none; }
+  canvas { touch-action:none; -webkit-user-select:none; user-select:none; }
   #animation_container {
 	position:absolute;
 	margin:auto;
@@ -64,197 +66,175 @@ function handleComplete(evt,comp) {
 	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
 	AdobeAn.compositionLoaded(lib.properties.id);
 	fnStartAnimation();
-	setTimeout(iniciarExperienciaCasa, 80);
+	setTimeout(function(){
+		if (typeof setupPabloCasaInteractiva === "function") setupPabloCasaInteractiva();
+	}, 60);
+}
+
+// --- Interacción Pablo: zoom cinematográfico + audio desbloqueado por toque ---
+function setupPabloCasaInteractiva(){
+	if (!stage || !exportRoot || !exportRoot.instance) return;
+	var cont = exportRoot.instance;
+	var canvasEl = document.getElementById("canvas");
+	var W = 1080, H = 1920;
+
+	// Capas de luz dentro de contenedor_casa según export de Animate.
+	var lights = [
+		{mc:cont.instance_3, name:"ventana_1", power:1.25},
+		{mc:cont.instance_4, name:"ventana_2", power:1.25},
+		{mc:cont.instance_5, name:"puerta", power:1.45},
+		{mc:cont.instance_6, name:"atico", power:1.55},
+		{mc:cont.instance_7, name:"patio_1", power:1.15},
+		{mc:cont.instance_8, name:"patio_2", power:1.15},
+		{mc:cont.instance_9, name:"horizonte", power:0.95},
+		{mc:cont.instance_10, name:"parque", power:1.20}
+	].filter(function(o){ return !!o.mc; });
+
+	lights.forEach(function(o){
+		o.mc.alpha = 0;
+		o.mc.visible = true;
+		o.targetAlpha = 0;
+		o.phase = Math.random()*100;
+	});
+
+	var baseX = cont.x, baseY = cont.y, baseSX = cont.scaleX, baseSY = cont.scaleY;
+	var pointerDown = false;
+	var px = W/2, py = H/2;
+	var zoomT = 0;          // 0..1 progresivo lineal
+	var MAX_ZOOM = 0.36;   // moderado: bastante menos que el anterior
+	var ZOOM_MS = 5000;    // 5 segundos ida / vuelta
+	var lastTime = createjs.Ticker.getTime();
+	var audioStarted = false;
+	var ambientSound = null;
+	var masterLightEnergy = 0;
+
+	function easeInOut(t){
+		// velocidad cero al inicio y al final, acelera en el medio
+		return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
+	}
+	function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+	function canvasPoint(evt){
+		var rect = canvasEl.getBoundingClientRect();
+		var clientX = evt.clientX, clientY = evt.clientY;
+		if (evt.touches && evt.touches.length){ clientX = evt.touches[0].clientX; clientY = evt.touches[0].clientY; }
+		return { x:(clientX-rect.left)/rect.width*W, y:(clientY-rect.top)/rect.height*H };
+	}
+	function vibrate(pattern){
+		try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {}
+	}
+	function startAmbientAudio(){
+		if (audioStarted) return;
+		audioStarted = true;
+		try {
+			ambientSound = createjs.Sound.play("ScreenRecording_05062026180020_1_1", {
+				interrupt:createjs.Sound.INTERRUPT_NONE,
+				loop:-1,
+				volume:0
+			});
+			if (ambientSound) {
+				ambientSound.volume = 0;
+				createjs.Tween.get(ambientSound, {override:false}).to({volume:0.42}, 3000, createjs.Ease.sineInOut);
+			}
+		} catch(e) {}
+	}
+	function onDown(evt){
+		pointerDown = true;
+		var p = canvasPoint(evt); px = p.x; py = p.y;
+		startAmbientAudio();
+		vibrate(18);
+		if (evt.cancelable) evt.preventDefault();
+	}
+	function onMove(evt){
+		var p = canvasPoint(evt); px = p.x; py = p.y;
+		if (evt.cancelable) evt.preventDefault();
+	}
+	function onUp(evt){
+		pointerDown = false;
+		if (evt && evt.cancelable) evt.preventDefault();
+	}
+
+	canvasEl.addEventListener("pointerdown", onDown, {passive:false});
+	window.addEventListener("pointermove", onMove, {passive:false});
+	window.addEventListener("pointerup", onUp, {passive:false});
+	canvasEl.addEventListener("touchstart", onDown, {passive:false});
+	window.addEventListener("touchmove", onMove, {passive:false});
+	window.addEventListener("touchend", onUp, {passive:false});
+
+	function flashLight(o, peak, dur){
+		if (!o || !o.mc) return;
+		createjs.Tween.removeTweens(o.mc);
+		o.mc.alpha = Math.min(peak*0.55, 1.15);
+		createjs.Tween.get(o.mc)
+			.to({alpha:peak}, dur*0.22, createjs.Ease.quadOut)
+			.to({alpha:peak*0.35}, dur*0.22, createjs.Ease.quadInOut)
+			.to({alpha:peak*0.95}, dur*0.12, createjs.Ease.quadOut)
+			.to({alpha:0}, dur*0.44, createjs.Ease.sineIn);
+	}
+	function randomHaunt(){
+		var r = Math.random();
+		var chosen;
+		if (r < 0.30) chosen = lights.find(function(o){return o.name==="atico";});
+		else if (r < 0.55) chosen = lights.find(function(o){return o.name==="puerta";});
+		else chosen = lights[Math.floor(Math.random()*lights.length)];
+		flashLight(chosen, chosen ? chosen.power : 1, 500 + Math.random()*1100);
+		if (chosen && (chosen.name==="atico" || chosen.name==="puerta") && Math.random()<0.35) vibrate([25,35,55]);
+		setTimeout(randomHaunt, 900 + Math.random()*2600);
+	}
+	setTimeout(randomHaunt, 1200);
+
+	createjs.Ticker.addEventListener("tick", function(){
+		var now = createjs.Ticker.getTime();
+		var dt = Math.max(0, Math.min(80, now - lastTime));
+		lastTime = now;
+		zoomT += (pointerDown ? 1 : -1) * dt / ZOOM_MS;
+		zoomT = clamp(zoomT, 0, 1);
+		var zEase = easeInOut(zoomT);
+		var scale = 1 + MAX_ZOOM * zEase;
+
+		// Movimiento más presente: como cabeza/cámara que busca el dedo.
+		var nx = (px - W/2) / (W/2);
+		var ny = (py - H/2) / (H/2);
+		var follow = pointerDown ? 1 : zEase;
+		var targetX = baseX + nx * 92 * follow;
+		var targetY = baseY + ny * 128 * follow;
+		var targetSX = baseSX * scale;
+		var targetSY = baseSY * scale;
+
+		// Más brusco en desplazamiento, pero el zoom conserva curva suave.
+		cont.x += (targetX - cont.x) * 0.22;
+		cont.y += (targetY - cont.y) * 0.22;
+		cont.scaleX += (targetSX - cont.scaleX) * 0.055;
+		cont.scaleY += (targetSY - cont.scaleY) * 0.055;
+
+		// Bamboleo leve y respiración tenebrosa durante el zoom.
+		var t = now/1000;
+		cont.rotation = Math.sin(t*1.7)*0.18*zEase + Math.sin(t*4.1)*0.05*(pointerDown?1:0);
+
+		// Si el dedo se acerca a zonas de la casa, levanta luces de forma abusiva pero no constante.
+		masterLightEnergy *= 0.93;
+		if (pointerDown) masterLightEnergy = Math.max(masterLightEnergy, 0.35 + zEase*0.45);
+		lights.forEach(function(o, i){
+			if (createjs.Tween.hasActiveTweens && createjs.Tween.hasActiveTweens(o.mc)) return;
+			var pulse = (Math.sin(t*(1.5+i*0.31)+o.phase)+1)/2;
+			var proximity = pointerDown ? Math.max(0, 1 - Math.abs((i/(lights.length-1))-((px/W))) * 2.2) : 0;
+			var targetA = clamp((proximity*0.95 + masterLightEnergy*0.18*pulse) * o.power, 0, 1.15);
+			o.mc.alpha += (targetA - o.mc.alpha) * 0.055;
+		});
+
+		// Audio: si está sonando, que suba apenas con el toque y baje al soltar.
+		if (ambientSound) {
+			var targetVol = pointerDown ? 0.52 : 0.36;
+			ambientSound.volume += (targetVol - ambientSound.volume) * 0.025;
+		}
+	});
 }
 
 function playSound(id, loop, offset) {
 	return createjs.Sound.play(id, {'interrupt':createjs.Sound.INTERRUPT_EARLY, 'loop': loop, 'offset': offset});}
-
-
-// --- AJUSTE MOBILE / ZOOM SUAVE / AUDIO AMBIENTE ---
-function iniciarExperienciaCasa() {
-	if (!exportRoot || exportRoot.__casaMobileInit) return;
-	exportRoot.__casaMobileInit = true;
-
-	var root = exportRoot;
-	var casa = root.instance; // contenedor_casa exportado por Animate
-	if (!casa) return;
-
-	// Evita scroll/gestos del navegador sobre el canvas.
-	canvas.style.touchAction = "none";
-	document.body.style.overflow = "hidden";
-	document.documentElement.style.overflow = "hidden";
-
-	// Nombre conceptual de cada luz según el export.
-	var luces = [
-		{mc:casa.instance_3, nombre:"ventana_1", base:0.00, max:1.00, tactil:1.25, peso:1.00},
-		{mc:casa.instance_4, nombre:"ventana_2", base:0.00, max:1.00, tactil:1.20, peso:0.95},
-		{mc:casa.instance_5, nombre:"puerta",    base:0.00, max:1.00, tactil:1.35, peso:1.15},
-		{mc:casa.instance_6, nombre:"atico",     base:0.00, max:1.00, tactil:1.40, peso:1.25},
-		{mc:casa.instance_7, nombre:"patio_1",   base:0.00, max:0.95, tactil:1.10, peso:0.85},
-		{mc:casa.instance_8, nombre:"patio_2",   base:0.00, max:0.95, tactil:1.10, peso:0.85},
-		{mc:casa.instance_9, nombre:"horizonte", base:0.00, max:0.75, tactil:0.75, peso:0.55},
-		{mc:casa.instance_10,nombre:"parque",    base:0.00, max:0.95, tactil:1.05, peso:0.75}
-	].filter(function(o){ return !!o.mc; });
-
-	// Al primer frame, absolutamente todo apagado.
-	luces.forEach(function(o){
-		o.mc.alpha = 0;
-		o.mc.visible = true;
-		o.mc.compositeOperation = "screen";
-	});
-
-	// Entrada desde penumbra: no muestra todas las luces de golpe.
-	var velo = new createjs.Shape();
-	velo.graphics.beginFill("#000000").drawRect(0,0,1080,1920);
-	velo.alpha = 1;
-	root.addChild(velo);
-	createjs.Tween.get(velo).wait(200).to({alpha:0.18}, 2600, createjs.Ease.quadOut).wait(700).to({alpha:0}, 2200, createjs.Ease.quadInOut);
-
-	// Ajuste de cámara: zoom medio, lento, 5 segundos ida y 5 vuelta.
-	var baseX = casa.x, baseY = casa.y, baseSX = casa.scaleX, baseSY = casa.scaleY;
-	var touch = {down:false, x:540, y:960, targetZoom:1, zoom:1, panX:0, panY:0};
-	var MAX_ZOOM = 1.42;      // mitad de la versión anterior: se acerca, pero no se descontrola
-	var ZOOM_SPEED = 1/300;   // aprox. 5 segundos a 60fps para llegar al máximo
-	var PAN_MAX_X = 62;
-	var PAN_MAX_Y = 78;
-
-	function vibrar(patron) {
-		try { if (navigator.vibrate) navigator.vibrate(patron); } catch(e) {}
-	}
-	function normalizar(evt) {
-		var rect = canvas.getBoundingClientRect();
-		var p = evt.touches && evt.touches.length ? evt.touches[0] : evt;
-		return {
-			x: (p.clientX - rect.left) * (1080 / rect.width),
-			y: (p.clientY - rect.top) * (1920 / rect.height)
-		};
-	}
-	function pointerDown(evt) {
-		evt.preventDefault();
-		var p = normalizar(evt);
-		touch.down = true; touch.x = p.x; touch.y = p.y; touch.targetZoom = MAX_ZOOM;
-		arrancarAudioAmbiente();
-		vibrar(18);
-	}
-	function pointerMove(evt) {
-		if (!touch.down) return;
-		evt.preventDefault();
-		var p = normalizar(evt);
-		touch.x = p.x; touch.y = p.y;
-	}
-	function pointerUp(evt) {
-		touch.down = false;
-		touch.targetZoom = 1;
-	}
-	canvas.addEventListener("pointerdown", pointerDown, {passive:false});
-	window.addEventListener("pointermove", pointerMove, {passive:false});
-	window.addEventListener("pointerup", pointerUp, {passive:false});
-	canvas.addEventListener("touchstart", pointerDown, {passive:false});
-	window.addEventListener("touchmove", pointerMove, {passive:false});
-	window.addEventListener("touchend", pointerUp, {passive:false});
-
-	// Audio ambiental: fade in, loop con bajada al final y subida al reiniciar.
-	var audioAmb = null;
-	function arrancarAudioAmbiente() {
-		if (audioAmb) return;
-		audioAmb = new Audio("sounds/ScreenRecording_05062026180020_1_1.mp3");
-		audioAmb.preload = "auto";
-		audioAmb.loop = true;
-		audioAmb.volume = 0;
-		var prom = audioAmb.play();
-		if (prom && prom.catch) prom.catch(function(){ /* iOS puede exigir otro toque */ });
-		var fadeTimer = setInterval(function(){
-			if (!audioAmb || audioAmb.paused) return;
-			audioAmb.volume = Math.min(0.42, audioAmb.volume + 0.012);
-			if (audioAmb.volume >= 0.42) clearInterval(fadeTimer);
-		}, 120);
-		audioAmb.addEventListener("timeupdate", function(){
-			if (!audioAmb || !isFinite(audioAmb.duration) || audioAmb.duration < 8) return;
-			var quedan = audioAmb.duration - audioAmb.currentTime;
-			if (quedan < 4) {
-				// Se apaga un poco antes de volver a empezar, para que el loop no pegue un salto.
-				audioAmb.volume = Math.max(0.16, 0.16 + (quedan/4) * 0.26);
-			} else if (audioAmb.currentTime < 5) {
-				audioAmb.volume = Math.min(0.42, 0.16 + (audioAmb.currentTime/5) * 0.26);
-			} else if (!touch.down) {
-				audioAmb.volume += (0.36 - audioAmb.volume) * 0.025;
-			} else {
-				audioAmb.volume += (0.46 - audioAmb.volume) * 0.025;
-			}
-		});
-	}
-
-	// Luces: comportamiento más natural, con respiración, sustos y reacción táctil.
-	function prenderLuz(o, intensidad, subida, duracion, bajada) {
-		if (!o || !o.mc) return;
-		createjs.Tween.removeTweens(o.mc);
-		var pico = Math.min(o.tactil || 1, intensidad * (o.max || 1));
-		createjs.Tween.get(o.mc)
-			.to({alpha:pico}, subida || 240, createjs.Ease.quadOut)
-			.wait(duracion || 500)
-			.to({alpha:0}, bajada || 900, createjs.Ease.quadInOut);
-	}
-	function elegir(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
-	function cicloPoseido() {
-		var l = elegir(luces);
-		var esPrincipal = /ventana|puerta|atico/.test(l.nombre);
-		var intensidad = esPrincipal ? (0.85 + Math.random()*0.35) : (0.45 + Math.random()*0.45);
-		prenderLuz(l, intensidad, 80 + Math.random()*280, 180 + Math.random()*900, 450 + Math.random()*1200);
-		if (Math.random() < 0.28) {
-			setTimeout(function(){ prenderLuz(elegir(luces), 0.55 + Math.random()*0.45, 70, 100 + Math.random()*260, 380); }, 120 + Math.random()*460);
-		}
-		if (Math.random() < 0.18) vibrar([18,40,24]);
-		setTimeout(cicloPoseido, 550 + Math.random()*2200);
-	}
-	setTimeout(cicloPoseido, 2600);
-
-	createjs.Ticker.on("tick", function(){
-		// Zoom lento, sostenido mientras se mantiene el dedo.
-		var dz = touch.targetZoom - touch.zoom;
-		var paso = ZOOM_SPEED;
-		if (Math.abs(dz) > paso) touch.zoom += paso * (dz > 0 ? 1 : -1);
-		else touch.zoom = touch.targetZoom;
-
-		// El contenedor se mueve en sentido del dedo, como si la casa se acercara a la zona tocada.
-		var nx = (touch.x - 540) / 540;
-		var ny = (touch.y - 960) / 960;
-		var panObjetivoX = touch.down ? nx * PAN_MAX_X : 0;
-		var panObjetivoY = touch.down ? ny * PAN_MAX_Y : 0;
-		touch.panX += (panObjetivoX - touch.panX) * 0.055;
-		touch.panY += (panObjetivoY - touch.panY) * 0.055;
-
-		// Bamboleo mínimo para que no quede muerto.
-		var t = createjs.Ticker.getTicks();
-		var wobbleX = Math.sin(t*0.018) * 2.2;
-		var wobbleY = Math.cos(t*0.014) * 1.5;
-
-		casa.scaleX = baseSX * touch.zoom;
-		casa.scaleY = baseSY * touch.zoom;
-		casa.x = baseX + touch.panX + wobbleX;
-		casa.y = baseY + touch.panY + wobbleY;
-
-		// Cuando el dedo se acerca a sectores de la casa, las luces responden más fuerte.
-		if (touch.down) {
-			luces.forEach(function(o){
-				var b = o.mc.getTransformedBounds && o.mc.getTransformedBounds();
-				if (!b) return;
-				var cx = b.x + b.width/2, cy = b.y + b.height/2;
-				var dx = touch.x - cx, dy = touch.y - cy;
-				var dist = Math.sqrt(dx*dx + dy*dy);
-				var fuerza = Math.max(0, 1 - dist/430) * (o.peso || 1);
-				if (fuerza > 0.04) {
-					var objetivo = Math.min(o.tactil || 1, fuerza * 1.15);
-					o.mc.alpha += (objetivo - o.mc.alpha) * 0.08;
-				}
-			});
-		}
-	});
-}
 </script>
 <!-- write your code here -->
 </head>
-<body onload="init();" style="margin:0px; background:#000; overflow:hidden; touch-action:none;">
+<body onload="init();" style="margin:0px; overflow:hidden; background:#000; touch-action:none; overscroll-behavior:none;">
 	<div id="animation_container" style="background-color:rgba(0, 0, 0, 1.00); width:1080px; height:1920px">
 		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(0, 0, 0, 1.00);"></canvas>
 		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">

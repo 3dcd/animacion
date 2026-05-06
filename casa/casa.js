@@ -461,7 +461,7 @@ if (reversed == null) { reversed = false; }
 		if(this.totalFrames == 1) {
 			this.isSingleFrame = true;
 		}
-		// Sonido controlado por script mobile con fade/loop suave
+		// Audio ambiente: se inicia en el primer toque desde casa.html para evitar bloqueo móvil.
 	}
 
 	// actions tween:
@@ -498,17 +498,17 @@ lib.properties = {
 	color: "#000000",
 	opacity: 1.00,
 	manifest: [
-		{src:"images/CachedBmp_1.png?1778101498044", id:"CachedBmp_1"},
-		{src:"images/casa_atlas_1.png?1778101498034", id:"casa_atlas_1"},
-		{src:"images/casa_atlas_2.png?1778101498034", id:"casa_atlas_2"},
-		{src:"images/casa_atlas_3.png?1778101498034", id:"casa_atlas_3"},
-		{src:"images/casa_atlas_4.png?1778101498034", id:"casa_atlas_4"},
-		{src:"images/casa_atlas_5.png?1778101498034", id:"casa_atlas_5"},
-		{src:"images/casa_atlas_6.png?1778101498034", id:"casa_atlas_6"},
-		{src:"images/casa_atlas_7.png?1778101498034", id:"casa_atlas_7"},
-		{src:"images/casa_atlas_8.png?1778101498034", id:"casa_atlas_8"},
-		{src:"images/casa_atlas_9.png?1778101498034", id:"casa_atlas_9"},
-		{src:"sounds/ScreenRecording_05062026180020_1_1.mp3?1778101498044", id:"ScreenRecording_05062026180020_1_1"}
+		{src:"images/CachedBmp_1.png", id:"CachedBmp_1"},
+		{src:"images/casa_atlas_1.png", id:"casa_atlas_1"},
+		{src:"images/casa_atlas_2.png", id:"casa_atlas_2"},
+		{src:"images/casa_atlas_3.png", id:"casa_atlas_3"},
+		{src:"images/casa_atlas_4.png", id:"casa_atlas_4"},
+		{src:"images/casa_atlas_5.png", id:"casa_atlas_5"},
+		{src:"images/casa_atlas_6.png", id:"casa_atlas_6"},
+		{src:"images/casa_atlas_7.png", id:"casa_atlas_7"},
+		{src:"images/casa_atlas_8.png", id:"casa_atlas_8"},
+		{src:"images/casa_atlas_9.png", id:"casa_atlas_9"},
+		{src:"sounds/ScreenRecording_05062026180020_1_1.mp3", id:"ScreenRecording_05062026180020_1_1"}
 	],
 	preloads: []
 };
