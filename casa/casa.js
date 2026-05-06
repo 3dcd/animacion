@@ -482,16 +482,16 @@ lib.properties = {
 	color: "#000000",
 	opacity: 1.00,
 	manifest: [
-		{src:"images/CachedBmp_1.png?1778098625404", id:"CachedBmp_1"},
-		{src:"images/casa_atlas_1.png?1778098625394", id:"casa_atlas_1"},
-		{src:"images/casa_atlas_2.png?1778098625394", id:"casa_atlas_2"},
-		{src:"images/casa_atlas_3.png?1778098625394", id:"casa_atlas_3"},
-		{src:"images/casa_atlas_4.png?1778098625394", id:"casa_atlas_4"},
-		{src:"images/casa_atlas_5.png?1778098625394", id:"casa_atlas_5"},
-		{src:"images/casa_atlas_6.png?1778098625394", id:"casa_atlas_6"},
-		{src:"images/casa_atlas_7.png?1778098625394", id:"casa_atlas_7"},
-		{src:"images/casa_atlas_8.png?1778098625394", id:"casa_atlas_8"},
-		{src:"images/casa_atlas_9.png?1778098625394", id:"casa_atlas_9"}
+		{src:"images/CachedBmp_1.png", id:"CachedBmp_1"},
+		{src:"images/casa_atlas_1.png", id:"casa_atlas_1"},
+		{src:"images/casa_atlas_2.png", id:"casa_atlas_2"},
+		{src:"images/casa_atlas_3.png", id:"casa_atlas_3"},
+		{src:"images/casa_atlas_4.png", id:"casa_atlas_4"},
+		{src:"images/casa_atlas_5.png", id:"casa_atlas_5"},
+		{src:"images/casa_atlas_6.png", id:"casa_atlas_6"},
+		{src:"images/casa_atlas_7.png", id:"casa_atlas_7"},
+		{src:"images/casa_atlas_8.png", id:"casa_atlas_8"},
+		{src:"images/casa_atlas_9.png", id:"casa_atlas_9"}
 	],
 	preloads: []
 };
@@ -555,7 +555,7 @@ an.makeResponsive = function(isResp, respDim, isScale, scaleType, domContainers)
 	function resizeCanvas() {			
 		var w = lib.properties.width, h = lib.properties.height;			
 		var iw = window.innerWidth, ih=window.innerHeight;			
-		var pRatio = window.devicePixelRatio || 1, xRatio=iw/w, yRatio=ih/h, sRatio=1;			
+		var pRatio = Math.min(window.devicePixelRatio || 1, 2), xRatio=iw/w, yRatio=ih/h, sRatio=1;			
 		if(isResp) {                
 			if((respDim=='width'&&lastW==iw) || (respDim=='height'&&lastH==ih)) {                    
 				sRatio = lastS;                
