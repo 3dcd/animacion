@@ -122,6 +122,8 @@ function handleComplete(evt,comp) {
   let ultimaReaccion = 0;
   let ultimoFlashDedo = 0;
   let ultimaVibracion = 0;
+  let dragZoom = 0;
+  let dragZoomTarget = 0;
 
   setTimeout(()=>{ sistemaActivo = true; randomLuz(); }, 1200);
 
@@ -196,7 +198,10 @@ function handleComplete(evt,comp) {
     // Movimiento más suave y controlado. Antes hacía Tween por cada move y eso podía sentirse pesado.
     targetX = BASE_X + nx * 34;
     targetY = BASE_Y + ny * 22;
-    targetS = BASE_S + 0.010 + Math.min(0.020, Math.abs(nx)*0.028 + Math.abs(ny)*0.018);
+    // Zoom de exploración: mientras arrastrás, la casa se aproxima.
+    // No depende de un solo eje; subir/bajar o ir a los costados alimenta la sensación de acercamiento.
+    dragZoomTarget = 0.075 + Math.min(0.035, Math.abs(nx)*0.030 + Math.abs(ny)*0.040);
+    targetS = BASE_S + dragZoom;
     targetRot = nx * 0.35 + ny * 0.10;
 
     const distBorde = Math.max(Math.abs(nx), Math.abs(ny));
@@ -229,6 +234,7 @@ function handleComplete(evt,comp) {
     pointerActivo = false;
     targetX = BASE_X;
     targetY = BASE_Y;
+    dragZoomTarget = 0;
     targetS = BASE_S;
     targetRot = 0;
   });
@@ -241,8 +247,11 @@ function handleComplete(evt,comp) {
     // Lerp de cámara: más fluido que disparar Tweens a cada toque.
     casa.x += (targetX - casa.x) * 0.075;
     casa.y += (targetY - casa.y) * 0.075;
-    casa.scaleX += (targetS - casa.scaleX) * 0.070;
-    casa.scaleY += (targetS - casa.scaleY) * 0.070;
+    // Entrada/salida del zoom táctil: entra decidido, vuelve suave.
+    dragZoom += (dragZoomTarget - dragZoom) * (pointerActivo ? 0.105 : 0.075);
+    targetS = BASE_S + dragZoom;
+    casa.scaleX += (targetS - casa.scaleX) * 0.085;
+    casa.scaleY += (targetS - casa.scaleY) * 0.085;
 
     const bamboleo = pointerActivo ? 0.10 : 0.22;
     const rotNatural = Math.sin(t*0.00125)*bamboleo + Math.sin(t*0.0031)*0.05;
