@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<!--
+	NOTES:
+	1. All tokens are represented by '$' sign in the template.
+	2. You can write your code only wherever mentioned.
+	3. All occurrences of existing tokens will be replaced by their appropriate values.
+	4. Blank lines will be removed automatically.
+	5. Remove unnecessary comments before creating your template.
+-->
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="authoring-tool" content="Adobe_Animate_CC">
+<title>casa</title>
+<!-- write your code here -->
+<style>
+  #animation_container {
+	position:absolute;
+	margin:auto;
+	left:0;right:0;
+	top:0;bottom:0;
+  }
+</style>
+<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+<script src="casa.js?1778098625407"></script>
+<script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+function init() {
+	canvas = document.getElementById("canvas");
+	anim_container = document.getElementById("animation_container");
+	dom_overlay_container = document.getElementById("dom_overlay_container");
+	var comp=AdobeAn.getComposition("1214B6B5EC3848A7A25A5618AC420808");
+	var lib=comp.getLibrary();
+	var loader = new createjs.LoadQueue(false);
+	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
+	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
+	var lib=comp.getLibrary();
+	loader.loadManifest(lib.properties.manifest);
+}
+function handleFileLoad(evt, comp) {
+	var images=comp.getImages();	
+	if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }	
+}
+function handleComplete(evt,comp) {
+	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	var queue = evt.target;
+	var ssMetadata = lib.ssMetadata;
+	for(i=0; i<ssMetadata.length; i++) {
+		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
+	}
+	exportRoot = new lib.casa();
+	stage = new lib.Stage(canvas);	
+	//Registers the "tick" event listener.
+	fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+	}	    
+	//Code to support hidpi screens and responsive scaling.
+	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+
+
+// --- INTERACCION CASA: arranque desde penumbra + luces poseidas ---
+(function(){
+  const casa = exportRoot.instance;
+
+  // Clips de luminosidad detectados dentro del contenedor exportado desde Animate.
+  const luces = [
+    casa.instance_3,
+    casa.instance_4,
+    casa.instance_5,
+    casa.instance_6,
+    casa.instance_7,
+    casa.instance_8,
+    casa.instance_9,
+    casa.instance_10
+  ].filter(Boolean);
+
+  // MUY IMPORTANTE: apagar todo apenas arranca, antes de que el usuario vea el primer "truco".
+  luces.forEach(l => {
+    createjs.Tween.removeTweens(l);
+    l.alpha = 0;
+    l.visible = true;
+  });
+
+  // Entrada desde oscuridad: tapa negra que se retira lentamente.
+  const cortinaNegra = new createjs.Shape();
+  cortinaNegra.graphics.beginFill("#000000").drawRect(0,0,1080,1920);
+  cortinaNegra.alpha = 1;
+  exportRoot.addChild(cortinaNegra);
+
+  createjs.Tween.get(cortinaNegra)
+    .wait(250)
+    .to({alpha:0.25}, 1800, createjs.Ease.quadInOut)
+    .to({alpha:0}, 900, createjs.Ease.sineOut)
+    .call(()=> exportRoot.removeChild(cortinaNegra));
+
+  let sistemaActivo = false;
+  setTimeout(()=>{ sistemaActivo = true; randomLuz(); }, 1200);
+
+  function vibrar(patron){
+    if(navigator.vibrate){
+      try { navigator.vibrate(patron); } catch(e) {}
+    }
+  }
+
+  function flash(mc, fuerza=1.35, tiempo=450){
+    if(!mc || !sistemaActivo) return;
+    createjs.Tween.removeTweens(mc);
+    mc.alpha = 0;
+
+    // Más osado: pico casi total, caída irregular, como electricidad sucia.
+    createjs.Tween.get(mc)
+      .to({alpha:Math.min(fuerza,1.75)}, 45, createjs.Ease.quadOut)
+      .to({alpha:0.18}, 35)
+      .to({alpha:Math.min(fuerza*0.95,1.65)}, 55)
+      .to({alpha:Math.min(fuerza*0.55,1.0)}, 80)
+      .wait(80 + Math.random()*180)
+      .to({alpha:0}, tiempo, createjs.Ease.quadIn);
+
+    if(fuerza > 1.15) vibrar([25,18,65]);
+  }
+
+  function pulsoLargo(mc){
+    if(!mc || !sistemaActivo) return;
+    createjs.Tween.removeTweens(mc);
+    mc.alpha = 0;
+    createjs.Tween.get(mc)
+      .to({alpha:1.15}, 180, createjs.Ease.sineOut)
+      .to({alpha:0.75}, 380)
+      .to({alpha:1.35}, 90)
+      .to({alpha:0}, 900 + Math.random()*900, createjs.Ease.sineIn);
+  }
+
+  function randomLuz(){
+    if(!sistemaActivo) return;
+
+    const mc = luces[Math.floor(Math.random()*luces.length)];
+    const fuerza = 1.05 + Math.random()*0.65;
+
+    if(Math.random() > 0.72) pulsoLargo(mc);
+    else flash(mc, fuerza, 280 + Math.random()*900);
+
+    // Ecos poseídos: dos luces responden como si la casa tuviera vida propia.
+    if(Math.random() > 0.50){
+      const extra = luces[Math.floor(Math.random()*luces.length)];
+      setTimeout(()=>flash(extra,1.35 + Math.random()*0.35,380),90+Math.random()*420);
+    }
+    if(Math.random() > 0.82){
+      const extra2 = luces[Math.floor(Math.random()*luces.length)];
+      setTimeout(()=>pulsoLargo(extra2),450+Math.random()*650);
+    }
+
+    setTimeout(randomLuz, 350 + Math.random()*1350);
+  }
+
+  let targetX = 540;
+  let targetY = 671;
+  let targetScale = 0.8749;
+  let ultimoFlashDedo = 0;
+
+  function reaccionAlDedo(evt){
+    if(!sistemaActivo) return;
+
+    const nx = (evt.stageX / 1080) - 0.5;
+    const ny = (evt.stageY / 1920) - 0.5;
+
+    targetX = 540 + nx * 48;
+    targetY = 671 + ny * 34;
+    targetScale = 0.895 + Math.min(0.035, Math.abs(nx)*0.045 + Math.abs(ny)*0.035);
+
+    createjs.Tween.get(casa, {override:true})
+      .to({x:targetX, y:targetY, scaleX:targetScale, scaleY:targetScale}, 260, createjs.Ease.quadOut);
+
+    const ahora = Date.now();
+    if(ahora - ultimoFlashDedo > 420){
+      // En bordes, las luces laterales se acercan/contestan al dedo.
+      if(Math.abs(nx) > 0.33){
+        flash(casa.instance_7,1.65,420);
+        flash(casa.instance_8,1.55,520);
+        ultimoFlashDedo = ahora;
+      }
+      // Al subir/bajar, responden ático/puerta, más narrativo y sin miedo al brillo.
+      if(Math.abs(ny) > 0.24){
+        flash(casa.instance_6,1.75,650);
+        if(Math.random()>0.55) flash(casa.instance_3,1.45,360);
+        ultimoFlashDedo = ahora;
+      }
+    }
+  }
+
+  stage.on("stagemousemove", reaccionAlDedo);
+  stage.on("stagemousedown", function(evt){
+    if(!sistemaActivo) return;
+    vibrar([20,20,45]);
+    const elegida = luces[Math.floor(Math.random()*luces.length)];
+    flash(elegida,1.75,500);
+    reaccionAlDedo(evt);
+  });
+
+  createjs.Ticker.on("tick", function(){
+    if(!sistemaActivo) return;
+    const t = Date.now();
+    casa.rotation = Math.sin(t*0.0015)*0.45 + Math.sin(t*0.0041)*0.12;
+  });
+})();
+
+}
+</script>
+<!-- write your code here -->
+</head>
+<body onload="init();" style="margin:0px;">
+	<div id="animation_container" style="background-color:rgba(0, 0, 0, 1.00); width:1080px; height:1920px">
+		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(0, 0, 0, 1.00);"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
+		</div>
+	</div>
+</body>
+</html>
