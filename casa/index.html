@@ -17,6 +17,18 @@
 <style>
   html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-action:none; overscroll-behavior:none; }
   canvas { touch-action:none; -webkit-user-select:none; user-select:none; }
+  #start_overlay {
+    position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 50% 42%, rgba(30,25,20,.35), rgba(0,0,0,.95) 70%);
+    color:#f4e6d0; font-family:Arial, Helvetica, sans-serif; text-align:center;
+    touch-action:none; -webkit-user-select:none; user-select:none;
+  }
+  #start_button {
+    border:1px solid rgba(244,230,208,.55); border-radius:18px; padding:18px 24px;
+    background:rgba(0,0,0,.45); color:#f4e6d0; font-size:18px; letter-spacing:.4px;
+    box-shadow:0 0 28px rgba(255,185,90,.18); max-width:78vw; line-height:1.25;
+  }
+  #start_button small { display:block; opacity:.72; font-size:12px; margin-top:8px; }
   #animation_container {
 	position:absolute;
 	margin:auto;
@@ -69,6 +81,20 @@ function handleComplete(evt,comp) {
 	setTimeout(function(){
 		if (typeof setupPabloCasaInteractiva === "function") setupPabloCasaInteractiva();
 	}, 60);
+	setTimeout(function(){
+		var startBtn = document.getElementById("start_button");
+		var overlay = document.getElementById("start_overlay");
+		if (startBtn && overlay) {
+			startBtn.addEventListener("pointerdown", function(e){
+				if (e.cancelable) e.preventDefault();
+				if (typeof window.__startPabloCasaAudio === "function") window.__startPabloCasaAudio();
+				createjs.Tween.get(overlay.style).wait(50);
+				overlay.style.transition = "opacity 900ms ease";
+				overlay.style.opacity = "0";
+				setTimeout(function(){ overlay.style.display = "none"; }, 950);
+			}, {passive:false});
+		}
+	}, 120);
 }
 
 // --- Interacción Pablo: zoom cinematográfico + audio desbloqueado por toque ---
@@ -107,6 +133,7 @@ function setupPabloCasaInteractiva(){
 	var audioStarted = false;
 	var ambientSound = null;
 	var masterLightEnergy = 0;
+	window.__pabloExperienceStarted = false;
 
 	function easeInOut(t){
 		// velocidad cero al inicio y al final, acelera en el medio
@@ -123,20 +150,24 @@ function setupPabloCasaInteractiva(){
 		try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {}
 	}
 	function startAmbientAudio(){
+		window.__pabloExperienceStarted = true;
 		if (audioStarted) return;
 		audioStarted = true;
 		try {
+			// En móvil, esto debe ejecutarse desde un toque real: botón de inicio o primer pointerdown.
+			createjs.Sound.volume = 1;
 			ambientSound = createjs.Sound.play("ScreenRecording_05062026180020_1_1", {
-				interrupt:createjs.Sound.INTERRUPT_NONE,
+				interrupt:createjs.Sound.INTERRUPT_ANY,
 				loop:-1,
 				volume:0
 			});
 			if (ambientSound) {
-				ambientSound.volume = 0;
-				createjs.Tween.get(ambientSound, {override:false}).to({volume:0.42}, 3000, createjs.Ease.sineInOut);
+				ambientSound.volume = 0.001;
+				createjs.Tween.get(ambientSound, {override:false}).to({volume:0.46}, 2600, createjs.Ease.sineInOut);
 			}
 		} catch(e) {}
 	}
+	window.__startPabloCasaAudio = startAmbientAudio;
 	function onDown(evt){
 		pointerDown = true;
 		var p = canvasPoint(evt); px = p.x; py = p.y;
@@ -235,6 +266,7 @@ function playSound(id, loop, offset) {
 <!-- write your code here -->
 </head>
 <body onload="init();" style="margin:0px; overflow:hidden; background:#000; touch-action:none; overscroll-behavior:none;">
+	<div id="start_overlay"><button id="start_button">Tocar para entrar en la casa<small>Activá el sonido y explorá la penumbra</small></button></div>
 	<div id="animation_container" style="background-color:rgba(0, 0, 0, 1.00); width:1080px; height:1920px">
 		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(0, 0, 0, 1.00);"></canvas>
 		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
