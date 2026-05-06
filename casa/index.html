@@ -30,19 +30,6 @@
   }
   #start_button small { display:block; opacity:.72; font-size:12px; margin-top:8px; }
 
-  #sound_toggle {
-    position:fixed; top:14px; right:14px; z-index:9000;
-    min-width:44px; height:44px; border-radius:999px;
-    border:1px solid rgba(244,230,208,.55);
-    background:rgba(0,0,0,.48); color:#f4e6d0;
-    font-family:Arial, Helvetica, sans-serif; font-size:20px; line-height:1;
-    display:none; align-items:center; justify-content:center;
-    box-shadow:0 0 18px rgba(255,185,90,.18);
-    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    touch-action:manipulation; user-select:none; -webkit-user-select:none;
-  }
-  #sound_toggle.is-muted { opacity:.72; color:#cfc3b2; }
-  #sound_toggle small { font-size:10px; margin-left:4px; letter-spacing:.3px; }
 
   #animation_container {
 	position:absolute;
@@ -149,7 +136,7 @@ function setupPabloCasaInteractiva(){
 	var lastTime = createjs.Ticker.getTime();
 	var audioStarted = false;
 	var ambientSound = null;
-	var soundMuted = false;
+	var soundMuted = false; // sin botón de mute
 	var masterLightEnergy = 0;
 	window.__pabloExperienceStarted = false;
 
@@ -301,7 +288,7 @@ function setupPabloCasaInteractiva(){
 		// el volumen sigue la misma curva de 5 segundos que la cámara.
 		// Así no aparece de golpe: crece mientras entrás y se apaga mientras volvés.
 		if (ambientSound) {
-			var targetVol = soundMuted ? 0 : (0.88 * zEase);
+			var targetVol = 0.88 * zEase;
 			ambientSound.volume += (targetVol - ambientSound.volume) * 0.16;
 			if (!pointerDown && zoomT <= 0.002 && ambientSound.volume < 0.01) ambientSound.volume = 0;
 		}
@@ -315,7 +302,6 @@ function playSound(id, loop, offset) {
 </head>
 <body onload="init();" style="margin:0px; overflow:hidden; background:#000; touch-action:none; overscroll-behavior:none;">
 	<div id="start_overlay"><button id="start_button">Tocar para entrar en la casa<small>Activá el sonido: mantené tocado para escucharla</small></button></div>
-	<button id="sound_toggle" aria-label="Activar o apagar sonido" title="Sonido">🔊</button>
 	<div id="animation_container" style="background-color:rgba(0, 0, 0, 1.00); width:1080px; height:1920px">
 		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(0, 0, 0, 1.00);"></canvas>
 		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
