@@ -83,6 +83,10 @@ function setupModuloRostro() {
 	wrapper.style.transformOrigin = "0 0";
 	wrapper.style.zIndex = "9999";
 	wrapper.style.willChange = "transform, opacity";
+	wrapper.style.backfaceVisibility = "hidden";
+	wrapper.style.webkitBackfaceVisibility = "hidden";
+	wrapper.style.transformStyle = "preserve-3d";
+	wrapper.style.contain = "layout style paint";
 
 	var frame = document.createElement("iframe");
 	frame.id = "modulo_rostro_iframe";
@@ -100,6 +104,9 @@ function setupModuloRostro() {
 	frame.style.padding = "0";
 	frame.style.background = "transparent";
 	frame.style.overflow = "hidden";
+	frame.style.display = "block";
+	frame.style.backfaceVisibility = "hidden";
+	frame.style.webkitBackfaceVisibility = "hidden";
 
 	wrapper.appendChild(frame);
 	document.body.appendChild(wrapper);
@@ -114,36 +121,67 @@ function setupModuloRostro() {
 		};
 	}
 
-	function updateModuloRostro() {
+	// Optimización móvil:
+	// - No escribimos estilos si no cambió nada.
+	// - En celular limitamos la sincronización a ~24fps.
+	// - Redondeamos valores para evitar micro-temblores por decimales del responsive.
+	// Esto mantiene el iframe pegado al MovieClip sin castigar tanto al teléfono.
+	var isCoarsePointer = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+	var isSmallScreen = Math.min(window.innerWidth, window.innerHeight) < 820;
+	var isMobileLike = isCoarsePointer || isSmallScreen;
+	var MAX_SYNC_FPS = isMobileLike ? 24 : 60;
+	var MIN_SYNC_MS = 1000 / MAX_SYNC_FPS;
+	var lastSyncTime = 0;
+	var lastTransformKey = "";
+	var forceNextSync = true;
+
+	function roundForCss(v) {
+		var m = isMobileLike ? 100 : 1000;
+		return Math.round(v * m) / m;
+	}
+
+	function updateModuloRostro(force) {
 		if (!holder || !holder.parent) return;
 
-		var b = holder.nominalBounds || holder.getBounds() || {x:0, y:0, width:BASE_W, height:BASE_H};
+		var now = (window.performance && performance.now) ? performance.now() : Date.now();
+		if (!force && !forceNextSync && now - lastSyncTime < MIN_SYNC_MS) return;
+		lastSyncTime = now;
+		forceNextSync = false;
+
+		var bounds = holder.nominalBounds || holder.getBounds() || {x:0, y:0, width:BASE_W, height:BASE_H};
 
 		// Tomo tres esquinas del MovieClip y las convierto a coordenadas REALES de pantalla.
-		var g0 = holder.localToGlobal(b.x, b.y);
-		var g1 = holder.localToGlobal(b.x + b.width, b.y);
-		var g2 = holder.localToGlobal(b.x, b.y + b.height);
+		var g0 = holder.localToGlobal(bounds.x, bounds.y);
+		var g1 = holder.localToGlobal(bounds.x + bounds.width, bounds.y);
+		var g2 = holder.localToGlobal(bounds.x, bounds.y + bounds.height);
 		var p0 = globalToPage(g0);
 		var p1 = globalToPage(g1);
 		var p2 = globalToPage(g2);
 
 		// Matriz CSS: copia posición, escala, rotación y deformación del MovieClip.
-		var a = (p1.x - p0.x) / BASE_W;
-		var b1 = (p1.y - p0.y) / BASE_W;
-		var c = (p2.x - p0.x) / BASE_H;
-		var d = (p2.y - p0.y) / BASE_H;
-		var tx = p0.x;
-		var ty = p0.y;
+		var a = roundForCss((p1.x - p0.x) / BASE_W);
+		var b1 = roundForCss((p1.y - p0.y) / BASE_W);
+		var c = roundForCss((p2.x - p0.x) / BASE_H);
+		var d = roundForCss((p2.y - p0.y) / BASE_H);
+		var tx = roundForCss(p0.x);
+		var ty = roundForCss(p0.y);
+		var opacity = holder.alpha == null ? 1 : roundForCss(holder.alpha);
+		var display = holder.visible === false ? "none" : "block";
 
-		wrapper.style.transform = "matrix(" + a + "," + b1 + "," + c + "," + d + "," + tx + "," + ty + ")";
-		wrapper.style.opacity = holder.alpha == null ? "1" : String(holder.alpha);
-		wrapper.style.display = holder.visible === false ? "none" : "block";
+		var key = [a,b1,c,d,tx,ty,opacity,display].join(",");
+		if (key === lastTransformKey && !force) return;
+		lastTransformKey = key;
+
+		// translateZ(0) ayuda a que el celular trate esta capa como una textura acelerada por GPU.
+		wrapper.style.transform = "matrix(" + a + "," + b1 + "," + c + "," + d + "," + tx + "," + ty + ") translateZ(0)";
+		wrapper.style.opacity = String(opacity);
+		wrapper.style.display = display;
 	}
 
-	updateModuloRostro();
-	createjs.Ticker.addEventListener("tick", updateModuloRostro);
-	window.addEventListener("resize", function(){ setTimeout(updateModuloRostro, 50); });
-	window.addEventListener("orientationchange", function(){ setTimeout(updateModuloRostro, 250); });
+	updateModuloRostro(true);
+	createjs.Ticker.addEventListener("tick", function(){ updateModuloRostro(false); });
+	window.addEventListener("resize", function(){ forceNextSync = true; setTimeout(function(){ updateModuloRostro(true); }, 50); });
+	window.addEventListener("orientationchange", function(){ forceNextSync = true; setTimeout(function(){ updateModuloRostro(true); }, 250); });
 }
 
 </script>
