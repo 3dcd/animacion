@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<!--
+	NOTES:
+	1. All tokens are represented by '$' sign in the template.
+	2. You can write your code only wherever mentioned.
+	3. All occurrences of existing tokens will be replaced by their appropriate values.
+	4. Blank lines will be removed automatically.
+	5. Remove unnecessary comments before creating your template.
+-->
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="authoring-tool" content="Adobe_Animate_CC">
+<title>cumple</title>
+<!-- write your code here -->
+<style>
+  #animation_container {
+	position:absolute;
+	margin:auto;
+	left:0;right:0;
+	top:0;bottom:0;
+  }
+</style>
+<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+<script src="cumple.js"></script>
+<script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+function init() {
+	canvas = document.getElementById("canvas");
+	anim_container = document.getElementById("animation_container");
+	dom_overlay_container = document.getElementById("dom_overlay_container");
+	var comp=AdobeAn.getComposition("482D504D15B941A28E05FDA71F8B0D4D");
+	var lib=comp.getLibrary();
+	handleComplete({},comp);
+}
+function handleComplete(evt,comp) {
+	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	exportRoot = new lib.cumple();
+	stage = new lib.Stage(canvas);	
+	//Registers the "tick" event listener.
+	fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+		setupModuloRostro();
+	}	    
+	//Code to support hidpi screens and responsive scaling.
+	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+}
+
+
+function setupModuloRostro() {
+	var holder = exportRoot.targeta || exportRoot.tarjeta;
+	if (!holder || !dom_overlay_container) return;
+
+	// Oculto el rectángulo guía de Animate, pero lo sigo usando como referencia de posición/tamaño.
+	holder.alpha = 0;
+
+	// Permite que el iframe reciba el dedo/click aunque el contenedor DOM general no interfiera.
+	dom_overlay_container.style.pointerEvents = "none";
+
+	var frame = document.createElement("iframe");
+	frame.id = "modulo_rostro_iframe";
+	frame.src = "https://3dcd.github.io/animacion/rostro/";
+	frame.setAttribute("allow", "autoplay; fullscreen; accelerometer; gyroscope");
+	frame.setAttribute("allowfullscreen", "true");
+	frame.style.position = "absolute";
+	frame.style.border = "0";
+	frame.style.margin = "0";
+	frame.style.padding = "0";
+	frame.style.background = "transparent";
+	frame.style.overflow = "hidden";
+	frame.style.pointerEvents = "auto";
+	frame.style.transformOrigin = "0 0";
+	dom_overlay_container.appendChild(frame);
+
+	function updateModuloRostro() {
+		if (!holder || !holder.parent) return;
+		var b = holder.nominalBounds || holder.getBounds() || {x:0, y:0, width:1080, height:1920};
+		var p0 = holder.localToGlobal(b.x, b.y);
+		var p1 = holder.localToGlobal(b.x + b.width, b.y);
+		var p2 = holder.localToGlobal(b.x, b.y + b.height);
+		var w = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+		var h = Math.hypot(p2.x - p0.x, p2.y - p0.y);
+		var ang = Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI;
+
+		frame.style.left = p0.x + "px";
+		frame.style.top = p0.y + "px";
+		frame.style.width = w + "px";
+		frame.style.height = h + "px";
+		frame.style.opacity = holder.alpha;
+		frame.style.transform = "rotate(" + ang + "deg)";
+	}
+
+	updateModuloRostro();
+	createjs.Ticker.addEventListener("tick", updateModuloRostro);
+}
+
+</script>
+<!-- write your code here -->
+</head>
+<body onload="init();" style="margin:0px;">
+	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1080px; height:1920px">
+		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
+		</div>
+	</div>
+</body>
+</html>
