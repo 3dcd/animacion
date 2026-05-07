@@ -57,10 +57,13 @@ function setupModuloRostro() {
 	var holder = exportRoot.targeta || exportRoot.tarjeta;
 	if (!holder || !dom_overlay_container) return;
 
-	// Oculto el rectángulo guía de Animate, pero lo sigo usando como referencia de posición/tamaño.
-	holder.alpha = 0;
+	// Oculto solamente el rectángulo/placeholder, no el MovieClip completo.
+	// Así la referencia sigue existiendo y el iframe queda visible.
+	if (holder.shape) holder.shape.visible = false;
+	if (holder.children && holder.children.length) {
+		for (var i = 0; i < holder.children.length; i++) holder.children[i].visible = false;
+	}
 
-	// Permite que el iframe reciba el dedo/click aunque el contenedor DOM general no interfiera.
 	dom_overlay_container.style.pointerEvents = "none";
 
 	var frame = document.createElement("iframe");
@@ -76,6 +79,7 @@ function setupModuloRostro() {
 	frame.style.overflow = "hidden";
 	frame.style.pointerEvents = "auto";
 	frame.style.transformOrigin = "0 0";
+	frame.style.opacity = "1";
 	dom_overlay_container.appendChild(frame);
 
 	function updateModuloRostro() {
@@ -92,7 +96,6 @@ function setupModuloRostro() {
 		frame.style.top = p0.y + "px";
 		frame.style.width = w + "px";
 		frame.style.height = h + "px";
-		frame.style.opacity = holder.alpha;
 		frame.style.transform = "rotate(" + ang + "deg)";
 	}
 
