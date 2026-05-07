@@ -1,25 +1,17 @@
 <!DOCTYPE html>
-<!--
-	NOTES:
-	1. All tokens are represented by '$' sign in the template.
-	2. You can write your code only wherever mentioned.
-	3. All occurrences of existing tokens will be replaced by their appropriate values.
-	4. Blank lines will be removed automatically.
-	5. Remove unnecessary comments before creating your template.
--->
 <html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="authoring-tool" content="Adobe_Animate_CC">
 <title>casa</title>
-<!-- write your code here -->
 <style>
-  html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-action:none; overscroll-behavior:none; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-action:none; overscroll-behavior:none; margin:0; }
   canvas { touch-action:none; -webkit-user-select:none; user-select:none; }
+  #animation_container { position:absolute; margin:auto; left:0; right:0; top:0; bottom:0; }
   #start_overlay {
     position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(circle at 50% 42%, rgba(30,25,20,.35), rgba(0,0,0,.95) 70%);
+    background:radial-gradient(circle at 50% 42%, rgba(25,22,20,.35), rgba(0,0,0,.96) 72%);
     color:#f4e6d0; font-family:Arial, Helvetica, sans-serif; text-align:center;
     touch-action:none; -webkit-user-select:none; user-select:none;
   }
@@ -29,283 +21,254 @@
     box-shadow:0 0 28px rgba(255,185,90,.18); max-width:78vw; line-height:1.25;
   }
   #start_button small { display:block; opacity:.72; font-size:12px; margin-top:8px; }
-
-
-  #animation_container {
-	position:absolute;
-	margin:auto;
-	left:0;right:0;
-	top:0;bottom:0;
-  }
 </style>
 <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
-<script src="casa.js?1778101498046"></script>
+<script src="casa.js"></script>
 <script>
 var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
 function init() {
-	canvas = document.getElementById("canvas");
-	anim_container = document.getElementById("animation_container");
-	dom_overlay_container = document.getElementById("dom_overlay_container");
-	var comp=AdobeAn.getComposition("1214B6B5EC3848A7A25A5618AC420808");
-	var lib=comp.getLibrary();
-	var loader = new createjs.LoadQueue(false);
-	loader.installPlugin(createjs.Sound);
-	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
-	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
-	var lib=comp.getLibrary();
-	loader.loadManifest(lib.properties.manifest);
+  canvas = document.getElementById("canvas");
+  anim_container = document.getElementById("animation_container");
+  dom_overlay_container = document.getElementById("dom_overlay_container");
+  var comp=AdobeAn.getComposition("1214B6B5EC3848A7A25A5618AC420808");
+  var lib=comp.getLibrary();
+  var loader = new createjs.LoadQueue(false);
+  loader.installPlugin(createjs.Sound);
+  loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
+  loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
+  loader.loadManifest(lib.properties.manifest);
 }
 function handleFileLoad(evt, comp) {
-	var images=comp.getImages();	
-	if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }	
+  var images=comp.getImages();
+  if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }
 }
 function handleComplete(evt,comp) {
-	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
-	var lib=comp.getLibrary();
-	var ss=comp.getSpriteSheet();
-	var queue = evt.target;
-	var ssMetadata = lib.ssMetadata;
-	for(i=0; i<ssMetadata.length; i++) {
-		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
-	}
-	exportRoot = new lib.casa();
-	stage = new lib.Stage(canvas);	
-	//Registers the "tick" event listener.
-	fnStartAnimation = function() {
-		stage.addChild(exportRoot);
-		createjs.Ticker.framerate = lib.properties.fps;
-		createjs.Ticker.addEventListener("tick", stage);
-	}	    
-	//Code to support hidpi screens and responsive scaling.
-	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
-	AdobeAn.compositionLoaded(lib.properties.id);
-	fnStartAnimation();
-	setTimeout(function(){
-		if (typeof setupPabloCasaInteractiva === "function") setupPabloCasaInteractiva();
-	}, 60);
-	setTimeout(function(){
-		var startBtn = document.getElementById("start_button");
-		var overlay = document.getElementById("start_overlay");
-		if (startBtn && overlay) {
-			startBtn.addEventListener("pointerdown", function(e){
-				if (e.cancelable) e.preventDefault();
-				if (typeof window.__startPabloCasaAudio === "function") window.__startPabloCasaAudio();
-				var st = document.getElementById("sound_toggle");
-				if (st) st.style.display = "flex";
-				createjs.Tween.get(overlay.style).wait(50);
-				overlay.style.transition = "opacity 900ms ease";
-				overlay.style.opacity = "0";
-				setTimeout(function(){ overlay.style.display = "none"; }, 950);
-			}, {passive:false});
-		}
-	}, 120);
+  var lib=comp.getLibrary();
+  var ss=comp.getSpriteSheet();
+  var queue = evt.target;
+  var ssMetadata = lib.ssMetadata;
+  for(var i=0; i<ssMetadata.length; i++) {
+    ss[ssMetadata[i].name] = new createjs.SpriteSheet({"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames});
+  }
+  exportRoot = new lib.casa();
+  stage = new lib.Stage(canvas);
+  fnStartAnimation = function() {
+    stage.addChild(exportRoot);
+    createjs.Ticker.framerate = lib.properties.fps;
+    createjs.Ticker.addEventListener("tick", stage);
+  };
+  AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);
+  AdobeAn.compositionLoaded(lib.properties.id);
+  fnStartAnimation();
+  setTimeout(function(){ if (typeof setupPabloCasaInteractiva === "function") setupPabloCasaInteractiva(); }, 80);
+  setTimeout(function(){
+    var startBtn = document.getElementById("start_button");
+    var overlay = document.getElementById("start_overlay");
+    if (startBtn && overlay) {
+      startBtn.addEventListener("pointerdown", function(e){
+        if (e.cancelable) e.preventDefault();
+        if (typeof window.__startPabloCasaAudio === "function") window.__startPabloCasaAudio();
+        overlay.style.transition = "opacity 900ms ease";
+        overlay.style.opacity = "0";
+        setTimeout(function(){ overlay.style.display = "none"; }, 950);
+      }, {passive:false});
+      startBtn.addEventListener("touchstart", function(e){
+        if (e.cancelable) e.preventDefault();
+        if (typeof window.__startPabloCasaAudio === "function") window.__startPabloCasaAudio();
+        overlay.style.transition = "opacity 900ms ease";
+        overlay.style.opacity = "0";
+        setTimeout(function(){ overlay.style.display = "none"; }, 950);
+      }, {passive:false});
+    }
+  }, 160);
 }
 
-// --- Interacción Pablo: zoom cinematográfico + audio desbloqueado por toque ---
 function setupPabloCasaInteractiva(){
-	if (!stage || !exportRoot || !exportRoot.instance) return;
-	var cont = exportRoot.instance;
-	var canvasEl = document.getElementById("canvas");
-	var W = 1080, H = 1920;
+  if (!stage || !exportRoot || !exportRoot.instance) return;
+  var cont = exportRoot.instance;
+  var canvasEl = document.getElementById("canvas");
+  var W = 1080, H = 1920;
 
-	// Capas de luz dentro de contenedor_casa según export de Animate.
-	var lights = [
-		{mc:cont.instance_3, name:"ventana_1", power:1.25},
-		{mc:cont.instance_4, name:"ventana_2", power:1.25},
-		{mc:cont.instance_5, name:"puerta", power:1.45},
-		{mc:cont.instance_6, name:"atico", power:1.55},
-		{mc:cont.instance_7, name:"patio_1", power:1.15},
-		{mc:cont.instance_8, name:"patio_2", power:1.15},
-		{mc:cont.instance_9, name:"horizonte", power:0.95},
-		{mc:cont.instance_10, name:"parque", power:1.20}
-	].filter(function(o){ return !!o.mc; });
+  // En este export, el amanecer está como primer clip del contenedor.
+  var dawn = cont.instance || null;
+  if (dawn && dawn.gotoAndStop) {
+    dawn.gotoAndStop(0);
+    dawn.visible = true;
+    dawn.alpha = 1;
+  }
+  var dawnActive = false;
+  var dawnStarted = false;
 
-	lights.forEach(function(o){
-		o.mc.alpha = 0;
-		o.mc.visible = true;
-		o.targetAlpha = 0;
-		o.phase = Math.random()*100;
-	});
+  var lights = [
+    {mc:cont.instance_3, name:"ventana_1", power:1.25},
+    {mc:cont.instance_4, name:"ventana_2", power:1.25},
+    {mc:cont.instance_5, name:"puerta", power:1.45},
+    {mc:cont.instance_6, name:"atico", power:1.55},
+    {mc:cont.instance_7, name:"patio_1", power:1.15},
+    {mc:cont.instance_8, name:"patio_2", power:1.15},
+    {mc:cont.instance_9, name:"horizonte", power:0.95},
+    {mc:cont.instance_10, name:"parque", power:1.20}
+  ].filter(function(o){ return !!o.mc; });
 
-	var baseX = cont.x, baseY = cont.y, baseSX = cont.scaleX, baseSY = cont.scaleY;
-	var pointerDown = false;
-	var px = W/2, py = H/2;
-	var zoomT = 0;          // 0..1 progresivo lineal
-	var MAX_ZOOM = 0.36;   // moderado: bastante menos que el anterior
-	var ZOOM_MS = 5000;    // 5 segundos ida / vuelta
-	var lastTime = createjs.Ticker.getTime();
-	var audioStarted = false;
-	var ambientSound = null;
-	var soundMuted = false; // sin botón de mute
-	var masterLightEnergy = 0;
-	window.__pabloExperienceStarted = false;
+  lights.forEach(function(o){
+    o.mc.alpha = 0;
+    o.mc.visible = true;
+    o.targetAlpha = 0;
+    o.phase = Math.random()*100;
+  });
 
-	function easeInOut(t){
-		// velocidad cero al inicio y al final, acelera en el medio
-		return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
-	}
-	function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
-	function canvasPoint(evt){
-		var rect = canvasEl.getBoundingClientRect();
-		var clientX = evt.clientX, clientY = evt.clientY;
-		if (evt.touches && evt.touches.length){ clientX = evt.touches[0].clientX; clientY = evt.touches[0].clientY; }
-		return { x:(clientX-rect.left)/rect.width*W, y:(clientY-rect.top)/rect.height*H };
-	}
-	function vibrate(pattern){
-		try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {}
-	}
-	function startAmbientAudio(){
-		window.__pabloExperienceStarted = true;
-		if (audioStarted) return;
-		audioStarted = true;
-		try {
-			// En móvil, esto debe ejecutarse desde un toque real: botón de inicio o primer pointerdown.
-			createjs.Sound.volume = 1;
-			ambientSound = createjs.Sound.play("ScreenRecording_05062026180020_1_1", {
-				interrupt:createjs.Sound.INTERRUPT_ANY,
-				loop:-1,
-				volume:0
-			});
-			if (ambientSound) {
-				// El audio queda preparado, pero no invade: sube solo cuando hay dedo en pantalla.
-				ambientSound.volume = 0;
-			}
-		} catch(e) {}
-	}
-	window.__startPabloCasaAudio = startAmbientAudio;
+  var baseX = cont.x, baseY = cont.y, baseSX = cont.scaleX, baseSY = cont.scaleY;
+  var pointerDown = false;
+  var px = W/2, py = H/2;
+  var zoomT = 0;
+  var MAX_ZOOM = 0.36;
+  var ZOOM_MS = 5000;
+  var lastTime = createjs.Ticker.getTime();
+  var audioStarted = false;
+  var ambientSound = null;
+  var masterLightEnergy = 0;
 
-	function updateSoundButton(){
-		var btn = document.getElementById("sound_toggle");
-		if (!btn) return;
-		btn.innerHTML = soundMuted ? "🔇" : "🔊";
-		btn.classList.toggle("is-muted", soundMuted);
-	}
-	function toggleSound(evt){
-		if (evt && evt.cancelable) evt.preventDefault();
-		if (evt) evt.stopPropagation();
-		startAmbientAudio();
-		soundMuted = !soundMuted;
-		try {
-			if (ambientSound) {
-				createjs.Tween.removeTweens(ambientSound);
-				// El botón solo mutea/desmutea. El volumen real lo manda el dedo.
-				if (soundMuted) ambientSound.volume = 0;
-			}
-		} catch(e) {}
-		updateSoundButton();
-	}
-	var soundBtn = document.getElementById("sound_toggle");
-	if (soundBtn) {
-		soundBtn.addEventListener("pointerdown", toggleSound, {passive:false});
-		soundBtn.addEventListener("touchstart", toggleSound, {passive:false});
-		updateSoundButton();
-	}
-	function onDown(evt){
-		pointerDown = true;
-		var p = canvasPoint(evt); px = p.x; py = p.y;
-		startAmbientAudio();
-		vibrate(18);
-		if (evt.cancelable) evt.preventDefault();
-	}
-	function onMove(evt){
-		var p = canvasPoint(evt); px = p.x; py = p.y;
-		if (evt.cancelable) evt.preventDefault();
-	}
-	function onUp(evt){
-		pointerDown = false;
-		if (evt && evt.cancelable) evt.preventDefault();
-	}
+  function easeInOut(t){ return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2; }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function canvasPoint(evt){
+    var rect = canvasEl.getBoundingClientRect();
+    var clientX = evt.clientX, clientY = evt.clientY;
+    if (evt.touches && evt.touches.length){ clientX = evt.touches[0].clientX; clientY = evt.touches[0].clientY; }
+    return { x:(clientX-rect.left)/rect.width*W, y:(clientY-rect.top)/rect.height*H };
+  }
+  function vibrate(pattern){ try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {} }
+  function startAmbientAudio(){
+    if (audioStarted) return;
+    audioStarted = true;
+    try {
+      createjs.Sound.volume = 1;
+      ambientSound = createjs.Sound.play("ScreenRecording_05062026180020_1_1", {
+        interrupt:createjs.Sound.INTERRUPT_ANY,
+        loop:-1,
+        volume:0
+      });
+      if (ambientSound) ambientSound.volume = 0;
+    } catch(e) {}
+  }
+  window.__startPabloCasaAudio = startAmbientAudio;
 
-	canvasEl.addEventListener("pointerdown", onDown, {passive:false});
-	window.addEventListener("pointermove", onMove, {passive:false});
-	window.addEventListener("pointerup", onUp, {passive:false});
-	canvasEl.addEventListener("touchstart", onDown, {passive:false});
-	window.addEventListener("touchmove", onMove, {passive:false});
-	window.addEventListener("touchend", onUp, {passive:false});
+  function triggerDawn(){
+    if (dawnStarted) return;
+    dawnStarted = true;
+    dawnActive = true;
+    try {
+      if (dawn && dawn.gotoAndPlay) dawn.gotoAndPlay(1);
+      else if (dawn && dawn.play) dawn.play();
+    } catch(e) {}
+    // Disuelve las luces artificiales para que el amanecer las tape naturalmente.
+    lights.forEach(function(o){
+      createjs.Tween.removeTweens(o.mc);
+      createjs.Tween.get(o.mc).to({alpha:0}, 4200, createjs.Ease.sineInOut);
+    });
+    vibrate([18, 45, 18]);
+  }
+  // Acto final: a los 15 segundos arranca el MovieClip del amanecer.
+  setTimeout(triggerDawn, 15000);
 
-	function flashLight(o, peak, dur){
-		if (!o || !o.mc) return;
-		createjs.Tween.removeTweens(o.mc);
-		o.mc.alpha = Math.min(peak*0.55, 1.15);
-		createjs.Tween.get(o.mc)
-			.to({alpha:peak}, dur*0.22, createjs.Ease.quadOut)
-			.to({alpha:peak*0.35}, dur*0.22, createjs.Ease.quadInOut)
-			.to({alpha:peak*0.95}, dur*0.12, createjs.Ease.quadOut)
-			.to({alpha:0}, dur*0.44, createjs.Ease.sineIn);
-	}
-	function randomHaunt(){
-		var r = Math.random();
-		var chosen;
-		if (r < 0.30) chosen = lights.find(function(o){return o.name==="atico";});
-		else if (r < 0.55) chosen = lights.find(function(o){return o.name==="puerta";});
-		else chosen = lights[Math.floor(Math.random()*lights.length)];
-		flashLight(chosen, chosen ? chosen.power : 1, 500 + Math.random()*1100);
-		if (chosen && (chosen.name==="atico" || chosen.name==="puerta") && Math.random()<0.35) vibrate([25,35,55]);
-		setTimeout(randomHaunt, 900 + Math.random()*2600);
-	}
-	setTimeout(randomHaunt, 1200);
+  function onDown(evt){
+    pointerDown = true;
+    var p = canvasPoint(evt); px = p.x; py = p.y;
+    startAmbientAudio();
+    vibrate(18);
+    if (evt.cancelable) evt.preventDefault();
+  }
+  function onMove(evt){
+    var p = canvasPoint(evt); px = p.x; py = p.y;
+    if (evt.cancelable) evt.preventDefault();
+  }
+  function onUp(evt){
+    pointerDown = false;
+    if (evt && evt.cancelable) evt.preventDefault();
+  }
+  canvasEl.addEventListener("pointerdown", onDown, {passive:false});
+  window.addEventListener("pointermove", onMove, {passive:false});
+  window.addEventListener("pointerup", onUp, {passive:false});
+  canvasEl.addEventListener("touchstart", onDown, {passive:false});
+  window.addEventListener("touchmove", onMove, {passive:false});
+  window.addEventListener("touchend", onUp, {passive:false});
 
-	createjs.Ticker.addEventListener("tick", function(){
-		var now = createjs.Ticker.getTime();
-		var dt = Math.max(0, Math.min(80, now - lastTime));
-		lastTime = now;
-		zoomT += (pointerDown ? 1 : -1) * dt / ZOOM_MS;
-		zoomT = clamp(zoomT, 0, 1);
-		var zEase = easeInOut(zoomT);
-		var scale = 1 + MAX_ZOOM * zEase;
+  function flashLight(o, peak, dur){
+    if (!o || !o.mc || dawnActive) return;
+    createjs.Tween.removeTweens(o.mc);
+    o.mc.alpha = Math.min(peak*0.55, 1.15);
+    createjs.Tween.get(o.mc)
+      .to({alpha:peak}, dur*0.22, createjs.Ease.quadOut)
+      .to({alpha:peak*0.35}, dur*0.22, createjs.Ease.quadInOut)
+      .to({alpha:peak*0.95}, dur*0.12, createjs.Ease.quadOut)
+      .to({alpha:0}, dur*0.44, createjs.Ease.sineIn);
+  }
+  function randomHaunt(){
+    if (!dawnActive) {
+      var r = Math.random();
+      var chosen;
+      if (r < 0.30) chosen = lights.find(function(o){return o.name==="atico";});
+      else if (r < 0.55) chosen = lights.find(function(o){return o.name==="puerta";});
+      else chosen = lights[Math.floor(Math.random()*lights.length)];
+      flashLight(chosen, chosen ? chosen.power : 1, 500 + Math.random()*1100);
+      if (chosen && (chosen.name==="atico" || chosen.name==="puerta") && Math.random()<0.35) vibrate([25,35,55]);
+    }
+    setTimeout(randomHaunt, dawnActive ? 2600 + Math.random()*3000 : 900 + Math.random()*2600);
+  }
+  setTimeout(randomHaunt, 1200);
 
-		// Movimiento repelente: el dedo empuja la casa en sentido contrario, como imán negativo.
-		var nx = (px - W/2) / (W/2);
-		var ny = (py - H/2) / (H/2);
-		var follow = pointerDown ? 1 : zEase;
-		var targetX = baseX - nx * 92 * follow;
-		var targetY = baseY - ny * 128 * follow;
-		var targetSX = baseSX * scale;
-		var targetSY = baseSY * scale;
+  createjs.Ticker.addEventListener("tick", function(){
+    var now = createjs.Ticker.getTime();
+    var dt = Math.max(0, Math.min(80, now - lastTime));
+    lastTime = now;
+    zoomT += (pointerDown ? 1 : -1) * dt / ZOOM_MS;
+    zoomT = clamp(zoomT, 0, 1);
+    var zEase = easeInOut(zoomT);
+    var scale = 1 + MAX_ZOOM * zEase;
 
-		// Más brusco en desplazamiento, pero el zoom conserva curva suave.
-		cont.x += (targetX - cont.x) * 0.22;
-		cont.y += (targetY - cont.y) * 0.22;
-		cont.scaleX += (targetSX - cont.scaleX) * 0.055;
-		cont.scaleY += (targetSY - cont.scaleY) * 0.055;
+    var nx = (px - W/2) / (W/2);
+    var ny = (py - H/2) / (H/2);
+    var follow = pointerDown ? 1 : zEase;
+    var targetX = baseX - nx * 92 * follow;
+    var targetY = baseY - ny * 128 * follow;
+    var targetSX = baseSX * scale;
+    var targetSY = baseSY * scale;
 
-		// Bamboleo leve y respiración tenebrosa durante el zoom.
-		var t = now/1000;
-		cont.rotation = Math.sin(t*1.7)*0.18*zEase + Math.sin(t*4.1)*0.05*(pointerDown?1:0);
+    cont.x += (targetX - cont.x) * 0.22;
+    cont.y += (targetY - cont.y) * 0.22;
+    cont.scaleX += (targetSX - cont.scaleX) * 0.055;
+    cont.scaleY += (targetSY - cont.scaleY) * 0.055;
 
-		// Si el dedo se acerca a zonas de la casa, levanta luces de forma abusiva pero no constante.
-		masterLightEnergy *= 0.93;
-		if (pointerDown) masterLightEnergy = Math.max(masterLightEnergy, 0.35 + zEase*0.45);
-		lights.forEach(function(o, i){
-			if (createjs.Tween.hasActiveTweens && createjs.Tween.hasActiveTweens(o.mc)) return;
-			var pulse = (Math.sin(t*(1.5+i*0.31)+o.phase)+1)/2;
-			var proximity = pointerDown ? Math.max(0, 1 - Math.abs((i/(lights.length-1))-((px/W))) * 2.2) : 0;
-			var targetA = clamp((proximity*0.95 + masterLightEnergy*0.18*pulse) * o.power, 0, 1.15);
-			o.mc.alpha += (targetA - o.mc.alpha) * 0.055;
-		});
+    var t = now/1000;
+    cont.rotation = Math.sin(t*1.7)*0.18*zEase + Math.sin(t*4.1)*0.05*(pointerDown?1:0);
 
-		// Audio táctil sincronizado con el zoom:
-		// el volumen sigue la misma curva de 5 segundos que la cámara.
-		// Así no aparece de golpe: crece mientras entrás y se apaga mientras volvés.
-		if (ambientSound) {
-			var targetVol = 0.88 * zEase;
-			ambientSound.volume += (targetVol - ambientSound.volume) * 0.16;
-			if (!pointerDown && zoomT <= 0.002 && ambientSound.volume < 0.01) ambientSound.volume = 0;
-		}
-	});
+    // Durante la noche, la casa reacciona al dedo; con el amanecer, baja la posesión.
+    masterLightEnergy *= dawnActive ? 0.84 : 0.93;
+    if (pointerDown && !dawnActive) masterLightEnergy = Math.max(masterLightEnergy, 0.35 + zEase*0.45);
+    lights.forEach(function(o, i){
+      if (createjs.Tween.hasActiveTweens && createjs.Tween.hasActiveTweens(o.mc)) return;
+      var pulse = (Math.sin(t*(1.5+i*0.31)+o.phase)+1)/2;
+      var proximity = (pointerDown && !dawnActive) ? Math.max(0, 1 - Math.abs((i/(lights.length-1))-((px/W))) * 2.2) : 0;
+      var targetA = dawnActive ? 0 : clamp((proximity*0.95 + masterLightEnergy*0.18*pulse) * o.power, 0, 1.15);
+      o.mc.alpha += (targetA - o.mc.alpha) * (dawnActive ? 0.08 : 0.055);
+    });
+
+    if (ambientSound) {
+      // Antes del amanecer, acompaña el zoom. Cuando amanece, se disuelve casi por completo.
+      var targetVol = dawnActive ? 0.035 : (0.88 * zEase);
+      ambientSound.volume += (targetVol - ambientSound.volume) * (dawnActive ? 0.025 : 0.16);
+      if (!pointerDown && !dawnActive && zoomT <= 0.002 && ambientSound.volume < 0.01) ambientSound.volume = 0;
+    }
+  });
 }
 
-function playSound(id, loop, offset) {
-	return createjs.Sound.play(id, {'interrupt':createjs.Sound.INTERRUPT_EARLY, 'loop': loop, 'offset': offset});}
+function playSound(id, loop, offset) { return createjs.Sound.play(id, {'interrupt':createjs.Sound.INTERRUPT_EARLY, 'loop': loop, 'offset': offset}); }
 </script>
-<!-- write your code here -->
 </head>
-<body onload="init();" style="margin:0px; overflow:hidden; background:#000; touch-action:none; overscroll-behavior:none;">
-	<div id="start_overlay"><button id="start_button">Tocar para entrar en la casa<small>Activá el sonido: mantené tocado para escucharla</small></button></div>
-	<div id="animation_container" style="background-color:rgba(0, 0, 0, 1.00); width:1080px; height:1920px">
-		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(0, 0, 0, 1.00);"></canvas>
-		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
-		</div>
-	</div>
+<body onload="init();">
+  <div id="start_overlay"><button id="start_button">Tocar para entrar en la casa<small>Activá el sonido: mantené tocado para escucharla</small></button></div>
+  <div id="animation_container" style="background-color:rgba(0, 0, 0, 1.00); width:1080px; height:1920px">
+    <canvas id="canvas" width="1080" height="1920" style="position:absolute; display:block; background-color:rgba(0, 0, 0, 1.00);"></canvas>
+    <div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position:absolute; left:0px; top:0px; display:block;"></div>
+  </div>
 </body>
 </html>
