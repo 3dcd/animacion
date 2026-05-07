@@ -109,13 +109,6 @@ function setupModuloRostro() {
 	wrapper.appendChild(frame);
 	dom_overlay_container.appendChild(wrapper);
 
-	function getCssScale() {
-		// Animate cambia el tamaño CSS del contenedor en responsive.
-		// Las coordenadas de CreateJS están en 1080x1920, por eso las pasamos a píxeles reales de pantalla.
-		var rect = dom_overlay_container.getBoundingClientRect();
-		return rect.width / BASE_W || 1;
-	}
-
 	function updateModuloRostro() {
 		if (!holder || !holder.parent) return;
 
@@ -127,23 +120,19 @@ function setupModuloRostro() {
 		var logicalW = Math.hypot(p1.x - p0.x, p1.y - p0.y);
 		var logicalH = Math.hypot(p2.x - p0.x, p2.y - p0.y);
 		var angle = Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI;
-		var cssScale = getCssScale();
 
-		var screenX = p0.x * cssScale;
-		var screenY = p0.y * cssScale;
-		var screenW = logicalW * cssScale;
-		var screenH = logicalH * cssScale;
-
-		wrapper.style.left = screenX + "px";
-		wrapper.style.top = screenY + "px";
-		wrapper.style.width = screenW + "px";
-		wrapper.style.height = screenH + "px";
+		// IMPORTANTE: usamos coordenadas lógicas de Animate (1080x1920).
+		// El contenedor de Adobe ya se escala solo en celular/iPad; si lo escalamos otra vez, queda chico.
+		wrapper.style.left = p0.x + "px";
+		wrapper.style.top = p0.y + "px";
+		wrapper.style.width = logicalW + "px";
+		wrapper.style.height = logicalH + "px";
 		wrapper.style.transform = "rotate(" + angle + "deg)";
 		wrapper.style.opacity = holder.alpha == null ? "1" : String(holder.alpha);
 		wrapper.style.display = holder.visible === false ? "none" : "block";
 
-		// Escala interna del HTML externo para que entre completo dentro del recuadro.
-		frame.style.transform = "scale(" + (screenW / BASE_W) + ", " + (screenH / BASE_H) + ")";
+		// Escala interna del HTML externo para que ocupe exactamente el recuadro.
+		frame.style.transform = "scale(" + (logicalW / BASE_W) + ", " + (logicalH / BASE_H) + ")";
 	}
 
 	updateModuloRostro();
