@@ -53,54 +53,102 @@ function handleComplete(evt,comp) {
 }
 
 
+
 function setupModuloRostro() {
 	var holder = exportRoot.targeta || exportRoot.tarjeta;
 	if (!holder || !dom_overlay_container) return;
 
-	// Oculto solamente el rectángulo/placeholder, no el MovieClip completo.
-	// Así la referencia sigue existiendo y el iframe queda visible.
+	// Oculto solamente el rectángulo/placeholder. El MovieClip queda como referencia de posición/tamaño.
 	if (holder.shape) holder.shape.visible = false;
 	if (holder.children && holder.children.length) {
 		for (var i = 0; i < holder.children.length; i++) holder.children[i].visible = false;
 	}
 
+	// El overlay general no captura eventos, solo la ventana del módulo.
 	dom_overlay_container.style.pointerEvents = "none";
+	dom_overlay_container.style.overflow = "hidden";
 
+	var BASE_W = 1080;
+	var BASE_H = 1920;
+	var MODULO_URL = "https://3dcd.github.io/animacion/rostro/";
+
+	// Wrapper: esta es la “ventana” que sigue al MovieClip de Animate.
+	var wrapper = document.createElement("div");
+	wrapper.id = "modulo_rostro_wrapper";
+	wrapper.style.position = "absolute";
+	wrapper.style.left = "0px";
+	wrapper.style.top = "0px";
+	wrapper.style.width = BASE_W + "px";
+	wrapper.style.height = BASE_H + "px";
+	wrapper.style.overflow = "hidden";
+	wrapper.style.background = "transparent";
+	wrapper.style.pointerEvents = "auto";
+	wrapper.style.transformOrigin = "0 0";
+	wrapper.style.zIndex = "10";
+
+	// Iframe: lo fuerzo siempre a 1080x1920 y lo escalo adentro del wrapper.
+	// Esto evita que en iPad/celular el HTML externo se vea recortado por tener un viewport chico.
 	var frame = document.createElement("iframe");
 	frame.id = "modulo_rostro_iframe";
-	frame.src = "https://3dcd.github.io/animacion/rostro/";
+	frame.src = MODULO_URL;
 	frame.setAttribute("allow", "autoplay; fullscreen; accelerometer; gyroscope");
 	frame.setAttribute("allowfullscreen", "true");
+	frame.setAttribute("scrolling", "no");
 	frame.style.position = "absolute";
+	frame.style.left = "0px";
+	frame.style.top = "0px";
+	frame.style.width = BASE_W + "px";
+	frame.style.height = BASE_H + "px";
 	frame.style.border = "0";
 	frame.style.margin = "0";
 	frame.style.padding = "0";
 	frame.style.background = "transparent";
 	frame.style.overflow = "hidden";
-	frame.style.pointerEvents = "auto";
 	frame.style.transformOrigin = "0 0";
-	frame.style.opacity = "1";
-	dom_overlay_container.appendChild(frame);
+
+	wrapper.appendChild(frame);
+	dom_overlay_container.appendChild(wrapper);
+
+	function getCssScale() {
+		// Animate cambia el tamaño CSS del contenedor en responsive.
+		// Las coordenadas de CreateJS están en 1080x1920, por eso las pasamos a píxeles reales de pantalla.
+		var rect = dom_overlay_container.getBoundingClientRect();
+		return rect.width / BASE_W || 1;
+	}
 
 	function updateModuloRostro() {
 		if (!holder || !holder.parent) return;
-		var b = holder.nominalBounds || holder.getBounds() || {x:0, y:0, width:1080, height:1920};
+
+		var b = holder.nominalBounds || holder.getBounds() || {x:0, y:0, width:BASE_W, height:BASE_H};
 		var p0 = holder.localToGlobal(b.x, b.y);
 		var p1 = holder.localToGlobal(b.x + b.width, b.y);
 		var p2 = holder.localToGlobal(b.x, b.y + b.height);
-		var w = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-		var h = Math.hypot(p2.x - p0.x, p2.y - p0.y);
-		var ang = Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI;
 
-		frame.style.left = p0.x + "px";
-		frame.style.top = p0.y + "px";
-		frame.style.width = w + "px";
-		frame.style.height = h + "px";
-		frame.style.transform = "rotate(" + ang + "deg)";
+		var logicalW = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+		var logicalH = Math.hypot(p2.x - p0.x, p2.y - p0.y);
+		var angle = Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI;
+		var cssScale = getCssScale();
+
+		var screenX = p0.x * cssScale;
+		var screenY = p0.y * cssScale;
+		var screenW = logicalW * cssScale;
+		var screenH = logicalH * cssScale;
+
+		wrapper.style.left = screenX + "px";
+		wrapper.style.top = screenY + "px";
+		wrapper.style.width = screenW + "px";
+		wrapper.style.height = screenH + "px";
+		wrapper.style.transform = "rotate(" + angle + "deg)";
+		wrapper.style.opacity = holder.alpha == null ? "1" : String(holder.alpha);
+		wrapper.style.display = holder.visible === false ? "none" : "block";
+
+		// Escala interna del HTML externo para que entre completo dentro del recuadro.
+		frame.style.transform = "scale(" + (screenW / BASE_W) + ", " + (screenH / BASE_H) + ")";
 	}
 
 	updateModuloRostro();
 	createjs.Ticker.addEventListener("tick", updateModuloRostro);
+	window.addEventListener("resize", function(){ setTimeout(updateModuloRostro, 50); });
 }
 
 </script>
