@@ -3,10 +3,10 @@
 var p; // shortcut to reference prototypes
 var lib={};var ss={};var img={};
 lib.ssMetadata = [
-		{name:"west_tambo2_atlas_1", frames: [[0,0,1536,1024]]},
-		{name:"west_tambo2_atlas_2", frames: [[0,0,887,1650]]},
-		{name:"west_tambo2_atlas_3", frames: [[890,822,1022,686],[0,822,888,981],[-780906444,10,-1040187284,-788529043],[0,0,1574,820]]},
-		{name:"west_tambo2_atlas_4", frames: [[0,1475,724,69],[1219,1311,761,124],[1723,685,275,456],[1538,355,431,328],[-780906444,10,-1040187284,-788529043],[1219,1437,732,104],[0,1140,867,155],[1219,1143,587,166],[1098,0,618,353],[659,795,549,343],[0,1297,549,176],[0,725,657,289],[1210,795,511,343],[0,0,561,723],[869,1140,348,349],[1098,355,438,438],[563,0,533,533],[1718,0,251,251],[0,1016,648,38]]}
+		{name:"west_tambo2_atlas_1", frames: [[0,1475,674,78],[1219,1311,761,124],[1723,685,275,456],[1538,355,431,328],[1219,1437,732,104],[0,1140,867,155],[1219,1143,587,166],[1098,0,618,353],[659,795,549,343],[0,1297,549,176],[0,725,657,289],[1210,795,511,343],[0,0,561,723],[869,1140,348,349],[1098,355,438,438],[563,0,533,533],[1718,0,251,251],[0,1016,648,38]]},
+		{name:"west_tambo2_atlas_2", frames: [[890,822,1022,686],[0,822,888,981],[0,0,1574,820]]},
+		{name:"west_tambo2_atlas_3", frames: [[0,0,887,1650]]},
+		{name:"west_tambo2_atlas_4", frames: [[0,0,1536,1024]]}
 ];
 
 
@@ -30,165 +30,163 @@ lib.ssMetadata = [
 
 
 
-(lib.CachedBmp_9 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(0);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.CachedBmp_8 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(1);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.CachedBmp_7 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(2);
-}).prototype = p = new cjs.Sprite();
-
-
-
 (lib.CachedBmp_6 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(3);
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(0);
 }).prototype = p = new cjs.Sprite();
 
 
 
 (lib.CachedBmp_5 = function() {
-	this.initialize(ss["west_tambo2_atlas_3"]);
-	this.gotoAndStop(0);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.CachedBmp_4 = function() {
-	// Corrección: este bitmap corresponde al atlas de textos/flechas.
-	// Animate exportó un frame inválido en atlas_4; usamos el frame real de atlas_3.
-	this.initialize(ss["west_tambo2_atlas_3"]);
+	this.initialize(ss["west_tambo2_atlas_1"]);
 	this.gotoAndStop(1);
 }).prototype = p = new cjs.Sprite();
 
 
 
-(lib.CachedBmp_3 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(5);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.CachedBmp_2 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(6);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.CachedBmp_1 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(7);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.Mapadebits13 = function() {
-	this.initialize(ss["west_tambo2_atlas_3"]);
+(lib.CachedBmp_4 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
 	this.gotoAndStop(2);
 }).prototype = p = new cjs.Sprite();
 
 
 
-(lib.Mapadebits15 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(8);
+(lib.CachedBmp_9 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(3);
 }).prototype = p = new cjs.Sprite();
 
 
 
-(lib.Mapadebits16 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(9);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.Mapadebits17 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(10);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.Mapadebits18 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(11);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.Mapadebits19 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(12);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.oImage = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(13);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.oImage_0 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(14);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.oImage_1 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(15);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.oImage_2 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(16);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.oImage_3 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(17);
-}).prototype = p = new cjs.Sprite();
-
-
-
-(lib.Recurso15 = function() {
+(lib.CachedBmp_8 = function() {
 	this.initialize(ss["west_tambo2_atlas_2"]);
 	this.gotoAndStop(0);
 }).prototype = p = new cjs.Sprite();
 
 
 
-(lib.rrrroMapadebits1 = function() {
+(lib.CachedBmp_7 = function() {
+	this.initialize(ss["west_tambo2_atlas_2"]);
+	this.gotoAndStop(1);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.CachedBmp_3 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(4);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.CachedBmp_2 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(5);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.CachedBmp_1 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(6);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.Mapadebits13 = function() {
 	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(18);
+	this.gotoAndStop(0);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.Mapadebits15 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(7);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.Mapadebits16 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(8);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.Mapadebits17 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(9);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.Mapadebits18 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(10);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.Mapadebits19 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(11);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.oImage = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(12);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.oImage_0 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(13);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.oImage_1 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(14);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.oImage_2 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(15);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.oImage_3 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(16);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.Recurso15 = function() {
+	this.initialize(ss["west_tambo2_atlas_3"]);
+	this.gotoAndStop(0);
+}).prototype = p = new cjs.Sprite();
+
+
+
+(lib.rrrroMapadebits1 = function() {
+	this.initialize(ss["west_tambo2_atlas_1"]);
+	this.gotoAndStop(17);
 }).prototype = p = new cjs.Sprite();
 
 
 
 (lib.rrrrRecurso5 = function() {
-	this.initialize(ss["west_tambo2_atlas_3"]);
-	this.gotoAndStop(3);
+	this.initialize(ss["west_tambo2_atlas_2"]);
+	this.gotoAndStop(2);
 }).prototype = p = new cjs.Sprite();
 // helper functions:
 
@@ -221,10 +219,10 @@ if (reversed == null) { reversed = false; }
 	cjs.MovieClip.apply(this,[props]);
 
 	// Capa_1
-	this.instance = new lib.CachedBmp_9();
-	this.instance.setTransform(9.55,13.5,0.5,0.5);
+	this.instance = new lib.CachedBmp_6();
+	this.instance.setTransform(20.3,11.1,0.5,0.5);
 
-	this.instance_1 = new lib.CachedBmp_8();
+	this.instance_1 = new lib.CachedBmp_5();
 	this.instance_1.setTransform(0,0,0.5,0.5);
 
 	this.timeline.addTween(cjs.Tween.get({}).to({state:[{t:this.instance_1},{t:this.instance}]}).wait(1));
@@ -246,7 +244,7 @@ if (reversed == null) { reversed = false; }
 	cjs.MovieClip.apply(this,[props]);
 
 	// Capa_1
-	this.instance = new lib.CachedBmp_7();
+	this.instance = new lib.CachedBmp_4();
 	this.instance.setTransform(0,0,0.5,0.5);
 
 	this.timeline.addTween(cjs.Tween.get(this.instance).wait(1));
@@ -268,10 +266,10 @@ if (reversed == null) { reversed = false; }
 	cjs.MovieClip.apply(this,[props]);
 
 	// Capa_1
-	this.instance = new lib.CachedBmp_6();
+	this.instance = new lib.CachedBmp_9();
 	this.instance.setTransform(-107.65,133.75,0.5,0.5);
 
-	this.instance_1 = new lib.CachedBmp_5();
+	this.instance_1 = new lib.CachedBmp_8();
 	this.instance_1.setTransform(-42.5,0,0.5,0.5);
 
 	this.timeline.addTween(cjs.Tween.get({}).to({state:[{t:this.instance_1},{t:this.instance}]}).wait(1));
@@ -319,7 +317,7 @@ if (reversed == null) { reversed = false; }
 
 	// Capa_1
 	this.shape = new cjs.Shape();
-	var sprImg_shape = cjs.SpriteSheetUtils.extractFrame(ss["west_tambo2_atlas_4"],11);
+	var sprImg_shape = cjs.SpriteSheetUtils.extractFrame(ss["west_tambo2_atlas_1"],10);
 	sprImg_shape.onload = function(){
 		this.shape.graphics.bf(sprImg_shape, null, new cjs.Matrix2D(0.628,0,0,0.628,-206.4,-44.3)).s().p("EggQAG7IAAt1MBAhAAAIAAN1g")
 	}.bind(this);
@@ -735,7 +733,7 @@ if (reversed == null) { reversed = false; }
 	cjs.MovieClip.apply(this,[props]);
 
 	// Capa_1
-	this.instance = new lib.CachedBmp_4();
+	this.instance = new lib.CachedBmp_7();
 	this.instance.setTransform(9.7,-112.7,0.5,0.5);
 
 	this.instance_1 = new lib.Símbolo43();
@@ -766,7 +764,7 @@ if (reversed == null) { reversed = false; }
 
 	// Capa_1
 	this.shape = new cjs.Shape();
-	var sprImg_shape = cjs.SpriteSheetUtils.extractFrame(ss["west_tambo2_atlas_1"],0);
+	var sprImg_shape = cjs.SpriteSheetUtils.extractFrame(ss["west_tambo2_atlas_4"],0);
 	sprImg_shape.onload = function(){
 		this.shape.graphics.bf(sprImg_shape, null, new cjs.Matrix2D(0.45,-0.121,0.121,0.45,-187.6,-263.4)).s().p("AnGJvQgPhdgfhOQg9iZAbicIAVhAICzjmQDkkGD6jYQAFgEADgFIA2gPIDdBDIBgBtIAHAbQAFASACASQABAVgFAYQgDAOAOAbQgCAKgFAIIgHARQgEAUgKAUQgHALAFASIg3BSQhhEDieDEQhmB+idBQQidBQiwA3g")
 	}.bind(this);
@@ -796,7 +794,7 @@ if (reversed == null) { reversed = false; }
 
 	// Capa_1
 	this.shape = new cjs.Shape();
-	var sprImg_shape = cjs.SpriteSheetUtils.extractFrame(ss["west_tambo2_atlas_1"],0);
+	var sprImg_shape = cjs.SpriteSheetUtils.extractFrame(ss["west_tambo2_atlas_4"],0);
 	sprImg_shape.onload = function(){
 		this.shape.graphics.bf(sprImg_shape, null, new cjs.Matrix2D(0.559,0.177,0.116,-0.512,-149.2,33.1)).s().p("AF0KbQlRhVk5ikIgLgFIiOhvQjdj7g3klQgji6BAjBIAlgbQARgMAdgMIDaAvQDrE1FpCJQFGB+BOD6IAUARQAtBlAaCFQAOBFgPBHQgdAhgZATQgdAWgfALg")
 	}.bind(this);
@@ -3025,10 +3023,10 @@ lib.properties = {
 	color: "#FFFFFF",
 	opacity: 1.00,
 	manifest: [
-		{src:"west_tambo2_atlas_1.png?1778274637035", id:"west_tambo2_atlas_1"},
-		{src:"west_tambo2_atlas_2.png?1778274637035", id:"west_tambo2_atlas_2"},
-		{src:"west_tambo2_atlas_3.png?1778274637035", id:"west_tambo2_atlas_3"},
-		{src:"west_tambo2_atlas_4.png?1778274637035", id:"west_tambo2_atlas_4"}
+		{src:"west_tambo2_atlas_1.png", id:"west_tambo2_atlas_1"},
+		{src:"west_tambo2_atlas_2.png", id:"west_tambo2_atlas_2"},
+		{src:"west_tambo2_atlas_3.png", id:"west_tambo2_atlas_3"},
+		{src:"west_tambo2_atlas_4.png", id:"west_tambo2_atlas_4"}
 	],
 	preloads: []
 };
@@ -3092,7 +3090,7 @@ an.makeResponsive = function(isResp, respDim, isScale, scaleType, domContainers)
 	function resizeCanvas() {			
 		var w = lib.properties.width, h = lib.properties.height;			
 		var iw = window.innerWidth, ih=window.innerHeight;			
-		var pRatio = window.devicePixelRatio || 1, xRatio=iw/w, yRatio=ih/h, sRatio=1;			
+		var pRatio = 1, xRatio=iw/w, yRatio=ih/h, sRatio=1; // optimizado mobile: evita canvas gigante en Retina/Android			
 		if(isResp) {                
 			if((respDim=='width'&&lastW==iw) || (respDim=='height'&&lastH==ih)) {                    
 				sRatio = lastS;                

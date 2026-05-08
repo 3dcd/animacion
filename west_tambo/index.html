@@ -12,19 +12,118 @@
 <meta charset="UTF-8">
 <meta name="authoring-tool" content="Adobe_Animate_CC">
 <title>west_tambo2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <!-- write your code here -->
 <style>
+  html, body {
+    margin:0; padding:0; width:100%; height:100%;
+    background:#000; overflow:hidden;
+    touch-action:none;
+    -webkit-user-select:none; user-select:none;
+    -webkit-touch-callout:none;
+  }
   #animation_container {
-	position:absolute;
-	margin:auto;
-	left:0;right:0;
-	top:0;bottom:0;
+    position:absolute;
+    margin:auto;
+    left:0; right:0; top:0; bottom:0;
+    transform-origin:0 0;
+  }
+  #canvas {
+    touch-action:none;
+    -webkit-user-select:none; user-select:none;
+    -webkit-tap-highlight-color: transparent;
   }
 </style>
 <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
-<script src="west_tambo2.js?1778274637102"></script>
+<script src="west_tambo2.js"></script>
 <script>
 var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+
+function findNamedRecursive(node, matcher, out) {
+	out = out || [];
+	if (!node) return out;
+	if (node.name && matcher.test(node.name)) out.push(node);
+	if (node.children && node.children.length) {
+		for (var i = 0; i < node.children.length; i++) findNamedRecursive(node.children[i], matcher, out);
+	}
+	return out;
+}
+function findOuterButton(node) {
+	var p = node ? node.parent : null;
+	while (p) {
+		if (p.name && /^button_\d+$/.test(p.name)) return p;
+		p = p.parent;
+	}
+	return null;
+}
+function bindElasticBalloon(inner, outer) {
+	if (!inner || !outer || inner.__elasticDragReady) return;
+	inner.__elasticDragReady = true;
+	inner.cursor = "pointer";
+	inner.mouseEnabled = true;
+	outer.mouseEnabled = true;
+	outer.mouseChildren = true;
+
+	var homeX = inner.x, homeY = inner.y;
+	var startPoint = null;
+	var dragging = false;
+	var moved = false;
+	var MAX_DRAG = 105;
+	var DRAG_FORCE = 0.68; // menos resistencia: acompaña mejor al dedo en mobile
+
+	function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+	function localPoint(evt) { return inner.parent.globalToLocal(evt.stageX, evt.stageY); }
+	function prevent(evt) {
+		if (evt && evt.nativeEvent && evt.nativeEvent.preventDefault) evt.nativeEvent.preventDefault();
+		if (evt && evt.stopPropagation) evt.stopPropagation();
+	}
+
+	inner.on("mousedown", function(evt) {
+		dragging = true;
+		moved = false;
+		homeX = inner.x;
+		homeY = inner.y;
+		startPoint = localPoint(evt);
+		createjs.Tween.removeTweens(inner);
+		prevent(evt);
+	});
+
+	inner.on("pressmove", function(evt) {
+		if (!dragging || !startPoint) return;
+		var p = localPoint(evt);
+		var dx = clamp((p.x - startPoint.x) * DRAG_FORCE, -MAX_DRAG, MAX_DRAG);
+		var dy = clamp((p.y - startPoint.y) * DRAG_FORCE, -MAX_DRAG, MAX_DRAG);
+		if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+		inner.x = homeX + dx;
+		inner.y = homeY + dy;
+		prevent(evt);
+	});
+
+	inner.on("pressup", function(evt) {
+		if (!dragging) return;
+		dragging = false;
+		createjs.Tween.removeTweens(inner);
+		createjs.Tween.get(inner, {override:true}).to({x:homeX, y:homeY}, 420, createjs.Ease.quadOut);
+		if (moved) {
+			setTimeout(function(){ try { outer.dispatchEvent("click"); } catch(e) {} }, 10);
+		}
+		prevent(evt);
+	});
+}
+function installElasticBalloonDrag(root) {
+	if (!root || !window.createjs) return;
+	var inners = findNamedRecursive(root, /^button_\d+_b(?:_\d+)?$/);
+	for (var i = 0; i < inners.length; i++) {
+		var inner = inners[i];
+		var outer = findOuterButton(inner);
+		if (!outer && inner.name) {
+			var m = inner.name.match(/^button_(\d+)_b/);
+			if (m && root["button_" + m[1]]) outer = root["button_" + m[1]];
+		}
+		bindElasticBalloon(inner, outer);
+	}
+}
+
 function init() {
 	canvas = document.getElementById("canvas");
 	anim_container = document.getElementById("animation_container");
@@ -52,12 +151,17 @@ function handleComplete(evt,comp) {
 	}
 	exportRoot = new lib.west_tambo2();
 	stage = new lib.Stage(canvas);
-	stage.enableMouseOver();	
+	if (createjs.Touch && createjs.Touch.enable) { createjs.Touch.enable(stage, true, false); }
+	stage.enableMouseOver(0);
+	stage.mouseMoveOutside = true;
+	installElasticBalloonDrag(exportRoot);	
 	//Registers the "tick" event listener.
 	fnStartAnimation = function() {
 		stage.addChild(exportRoot);
-		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
+		createjs.Ticker.framerate = 60; // vuelve fluido; el alivio fuerte se hace bajando resolución interna
 		createjs.Ticker.addEventListener("tick", stage);
+		createjs.Ticker.addEventListener("tick", function(){ installElasticBalloonDrag(exportRoot); });
 	}	    
 	//Code to support hidpi screens and responsive scaling.
 	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
@@ -67,10 +171,10 @@ function handleComplete(evt,comp) {
 </script>
 <!-- write your code here -->
 </head>
-<body onload="init();" style="margin:0px;">
+<body onload="init();">
 	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1080px; height:1920px">
 		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
-		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; touch-action:none; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
 		</div>
 	</div>
 </body>
