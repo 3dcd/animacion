@@ -2647,14 +2647,17 @@ if (reversed == null) { reversed = false; }
 
 	this.actionFrames = [205,225,245,265,285,305,325,345,365];
 	// timeline functions:
-	// Ajuste ChatGPT: los globos se arrastran con dedo/mouse y al soltar disparan la animación correspondiente.
+	// Ajuste ChatGPT: drag real para mouse + touch. Cada globo se arrastra independiente,
+	// respeta el punto donde se tocó, vuelve suave y recién ahí dispara su animación.
+	this._dragItems = [];
 	this._clearBallHandlers = function(btn) {
 		if (!btn) return;
 		if (btn._dragDown) btn.off("mousedown", btn._dragDown);
 		if (btn._dragMove) btn.off("pressmove", btn._dragMove);
 		if (btn._dragUp) btn.off("pressup", btn._dragUp);
-		if (btn._dragClick) btn.off("click", btn._dragClick);
-		btn._dragDown = btn._dragMove = btn._dragUp = btn._dragClick = null;
+		if (btn._dragOut) btn.off("mouseout", btn._dragOut);
+		btn._dragDown = btn._dragMove = btn._dragUp = btn._dragOut = null;
+		btn._dragActive = false;
 	};
 	this._detachAllBallHandlers = function() {
 		this._clearBallHandlers(this.button_1);
@@ -2662,41 +2665,77 @@ if (reversed == null) { reversed = false; }
 		this._clearBallHandlers(this.button_3);
 		this._clearBallHandlers(this.button_4);
 	};
+	this._makeLargeHitArea = function(btn) {
+		if (!btn || btn._hitAreaReady) return;
+		var b = null;
+		try { b = btn.getTransformedBounds && btn.getTransformedBounds(); } catch(e) {}
+		if (!b) { try { b = btn.getBounds && btn.getBounds(); } catch(e) {} }
+		var size = 420;
+		var ha = new cjs.Shape();
+		// Hit amplio para dedo: no altera lo visual, solo facilita tocar en celular.
+		ha.graphics.beginFill("#000").drawCircle(0, 0, size/2);
+		btn.hitArea = ha;
+		btn._hitAreaReady = true;
+	};
+	this._safePreventDefault = function(evt) {
+		try {
+			if (evt && evt.nativeEvent && evt.nativeEvent.preventDefault) evt.nativeEvent.preventDefault();
+		} catch(e) {}
+	};
 	this._enableBallDrag = function(btn, label) {
 		var root = this;
 		if (!btn || btn._off) return;
 		root._clearBallHandlers(btn);
+		root._makeLargeHitArea(btn);
 		btn.cursor = "pointer";
-		btn.mouseChildren = true;
-		btn._dragging = false;
+		btn.mouseEnabled = true;
+		btn.mouseChildren = false;
+		btn._homeX = btn.x;
+		btn._homeY = btn.y;
+		btn._homeScaleX = btn.scaleX;
+		btn._homeScaleY = btn.scaleY;
+		btn._homeRotation = btn.rotation;
+		btn._dragMoved = false;
 		btn._dragDown = function(evt) {
-			btn._dragging = false;
-			btn._startX = btn.x;
-			btn._startY = btn.y;
+			root._safePreventDefault(evt);
+			btn._dragActive = true;
+			btn._dragMoved = false;
+			btn._homeX = btn.x;
+			btn._homeY = btn.y;
 			btn._dragOffsetX = btn.x - evt.stageX;
 			btn._dragOffsetY = btn.y - evt.stageY;
+			btn._lastStageX = evt.stageX;
+			btn._lastStageY = evt.stageY;
 			cjs.Tween.removeTweens(btn);
 		};
 		btn._dragMove = function(evt) {
-			btn._dragging = true;
-			// Movimiento suave: no salta al centro del dedo, respeta el punto donde se tocó.
+			if (!btn._dragActive) return;
+			root._safePreventDefault(evt);
+			var dx = evt.stageX - btn._lastStageX;
+			var dy = evt.stageY - btn._lastStageY;
+			if (Math.abs(dx) + Math.abs(dy) > 2) btn._dragMoved = true;
+			btn._lastStageX = evt.stageX;
+			btn._lastStageY = evt.stageY;
+			// No salta al centro del dedo: mantiene el offset inicial del toque.
 			var targetX = evt.stageX + btn._dragOffsetX;
 			var targetY = evt.stageY + btn._dragOffsetY;
-			btn.x += (targetX - btn.x) * 0.55;
-			btn.y += (targetY - btn.y) * 0.55;
+			// Resorte suave independiente por globo.
+			btn.x += (targetX - btn.x) * 0.72;
+			btn.y += (targetY - btn.y) * 0.72;
 		};
 		btn._dragUp = function(evt) {
-			// Al soltar, entra a la parte animada de ese globo.
-			root.gotoAndPlay(label);
-		};
-		btn._dragClick = function(evt) {
-			// Si el usuario apenas toca sin arrastrar, también funciona.
-			if (!btn._dragging) root.gotoAndPlay(label);
+			if (!btn._dragActive) return;
+			root._safePreventDefault(evt);
+			btn._dragActive = false;
+			cjs.Tween.removeTweens(btn);
+			// Vuelve suave a su posición de ese frame y dispara la animación correspondiente.
+			cjs.Tween.get(btn)
+				.to({x:btn._homeX, y:btn._homeY}, 260, cjs.Ease.quadOut)
+				.call(function(){ root.gotoAndPlay(label); });
 		};
 		btn.on("mousedown", btn._dragDown);
 		btn.on("pressmove", btn._dragMove);
 		btn.on("pressup", btn._dragUp);
-		btn.on("click", btn._dragClick);
 	};
 	this._enableFinDrags = function() {
 		this._detachAllBallHandlers();
