@@ -66,8 +66,10 @@ lib.ssMetadata = [
 
 
 (lib.CachedBmp_4 = function() {
-	this.initialize(ss["west_tambo2_atlas_4"]);
-	this.gotoAndStop(4);
+	// Corrección: este bitmap corresponde al atlas de textos/flechas.
+	// Animate exportó un frame inválido en atlas_4; usamos el frame real de atlas_3.
+	this.initialize(ss["west_tambo2_atlas_3"]);
+	this.gotoAndStop(1);
 }).prototype = p = new cjs.Sprite();
 
 
@@ -764,7 +766,7 @@ if (reversed == null) { reversed = false; }
 
 	// Capa_1
 	this.shape = new cjs.Shape();
-	var sprImg_shape = cjs.SpriteSheetUtils.extractFrame(ss["west_tambo2_atlas_3"],2);
+	var sprImg_shape = cjs.SpriteSheetUtils.extractFrame(ss["west_tambo2_atlas_1"],0);
 	sprImg_shape.onload = function(){
 		this.shape.graphics.bf(sprImg_shape, null, new cjs.Matrix2D(0.45,-0.121,0.121,0.45,-187.6,-263.4)).s().p("AnGJvQgPhdgfhOQg9iZAbicIAVhAICzjmQDkkGD6jYQAFgEADgFIA2gPIDdBDIBgBtIAHAbQAFASACASQABAVgFAYQgDAOAOAbQgCAKgFAIIgHARQgEAUgKAUQgHALAFASIg3BSQhhEDieDEQhmB+idBQQidBQiwA3g")
 	}.bind(this);
@@ -794,7 +796,7 @@ if (reversed == null) { reversed = false; }
 
 	// Capa_1
 	this.shape = new cjs.Shape();
-	var sprImg_shape = cjs.SpriteSheetUtils.extractFrame(ss["west_tambo2_atlas_3"],2);
+	var sprImg_shape = cjs.SpriteSheetUtils.extractFrame(ss["west_tambo2_atlas_1"],0);
 	sprImg_shape.onload = function(){
 		this.shape.graphics.bf(sprImg_shape, null, new cjs.Matrix2D(0.559,0.177,0.116,-0.512,-149.2,33.1)).s().p("AF0KbQlRhVk5ikIgLgFIiOhvQjdj7g3klQgji6BAjBIAlgbQARgMAdgMIDaAvQDrE1FpCJQFGB+BOD6IAUARQAtBlAaCFQAOBFgPBHQgdAhgZATQgdAWgfALg")
 	}.bind(this);
