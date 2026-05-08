@@ -3208,10 +3208,10 @@ lib.properties = {
 	color: "#FFFFFF",
 	opacity: 1.00,
 	manifest: [
-		{src:"west_tambo2_atlas_1.png", id:"west_tambo2_atlas_1"},
-		{src:"west_tambo2_atlas_2.png", id:"west_tambo2_atlas_2"},
-		{src:"west_tambo2_atlas_3.png", id:"west_tambo2_atlas_3"},
-		{src:"west_tambo2_atlas_4.png", id:"west_tambo2_atlas_4"}
+		{src:"west_tambo2_atlas_1.png?1778252419774", id:"west_tambo2_atlas_1"},
+		{src:"west_tambo2_atlas_2.png?1778252419774", id:"west_tambo2_atlas_2"},
+		{src:"west_tambo2_atlas_3.png?1778252419774", id:"west_tambo2_atlas_3"},
+		{src:"west_tambo2_atlas_4.png?1778252419774", id:"west_tambo2_atlas_4"}
 	],
 	preloads: []
 };
