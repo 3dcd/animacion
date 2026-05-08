@@ -2647,132 +2647,99 @@ if (reversed == null) { reversed = false; }
 
 	this.actionFrames = [205,225,245,265,285,305,325,345,365];
 	// timeline functions:
+	// Ajuste ChatGPT: los globos se arrastran con dedo/mouse y al soltar disparan la animación correspondiente.
+	this._clearBallHandlers = function(btn) {
+		if (!btn) return;
+		if (btn._dragDown) btn.off("mousedown", btn._dragDown);
+		if (btn._dragMove) btn.off("pressmove", btn._dragMove);
+		if (btn._dragUp) btn.off("pressup", btn._dragUp);
+		if (btn._dragClick) btn.off("click", btn._dragClick);
+		btn._dragDown = btn._dragMove = btn._dragUp = btn._dragClick = null;
+	};
+	this._detachAllBallHandlers = function() {
+		this._clearBallHandlers(this.button_1);
+		this._clearBallHandlers(this.button_2);
+		this._clearBallHandlers(this.button_3);
+		this._clearBallHandlers(this.button_4);
+	};
+	this._enableBallDrag = function(btn, label) {
+		var root = this;
+		if (!btn || btn._off) return;
+		root._clearBallHandlers(btn);
+		btn.cursor = "pointer";
+		btn.mouseChildren = true;
+		btn._dragging = false;
+		btn._dragDown = function(evt) {
+			btn._dragging = false;
+			btn._startX = btn.x;
+			btn._startY = btn.y;
+			btn._dragOffsetX = btn.x - evt.stageX;
+			btn._dragOffsetY = btn.y - evt.stageY;
+			cjs.Tween.removeTweens(btn);
+		};
+		btn._dragMove = function(evt) {
+			btn._dragging = true;
+			// Movimiento suave: no salta al centro del dedo, respeta el punto donde se tocó.
+			var targetX = evt.stageX + btn._dragOffsetX;
+			var targetY = evt.stageY + btn._dragOffsetY;
+			btn.x += (targetX - btn.x) * 0.55;
+			btn.y += (targetY - btn.y) * 0.55;
+		};
+		btn._dragUp = function(evt) {
+			// Al soltar, entra a la parte animada de ese globo.
+			root.gotoAndPlay(label);
+		};
+		btn._dragClick = function(evt) {
+			// Si el usuario apenas toca sin arrastrar, también funciona.
+			if (!btn._dragging) root.gotoAndPlay(label);
+		};
+		btn.on("mousedown", btn._dragDown);
+		btn.on("pressmove", btn._dragMove);
+		btn.on("pressup", btn._dragUp);
+		btn.on("click", btn._dragClick);
+	};
+	this._enableFinDrags = function() {
+		this._detachAllBallHandlers();
+		this._enableBallDrag(this.button_1, "n1");
+		this._enableBallDrag(this.button_2, "n2");
+		this._enableBallDrag(this.button_3, "n3");
+		this._enableBallDrag(this.button_4, "n4");
+	};
+	this._enableReturnDrag = function(btn, label) {
+		this._detachAllBallHandlers();
+		this._enableBallDrag(btn, label);
+	};
 	this.frame_205 = function() {
 		this.stop();
-		
-		var _this = this;
-		
-		if (_this._click1) _this.button_1.off("click", _this._click1);
-		
-		if (_this._click2) _this.button_2.off("click", _this._click2);
-		
-		if (_this._click3) _this.button_3.off("click", _this._click3);
-		
-		if (_this._click4) _this.button_4.off("click", _this._click4);
-		
-		
-		
-		// ejemplo frame fin:
-		
-		_this._click1 = function(){ _this.gotoAndPlay("n1"); };
-		
-		_this._click2 = function(){ _this.gotoAndPlay("n2"); };
-		
-		_this._click3 = function(){ _this.gotoAndPlay("n3"); };
-		
-		_this._click4 = function(){ _this.gotoAndPlay("n4"); };
-		
-		
-		
-		_this.button_1.on("click", _this._click1);
-		
-		_this.button_2.on("click", _this._click2);
-		
-		_this.button_3.on("click", _this._click3);
-		
-		_this.button_4.on("click", _this._click4);
+		this._enableFinDrags();
 	}
 	this.frame_225 = function() {
 		this.stop();
-		
-		var _this = this;
-		
-		if (_this._click1) _this.button_1.off("click", _this._click1);
-		
-		_this._click1 = function(){
-		
-		    _this.gotoAndPlay("n1b");
-		
-		};
-		
-		_this.button_1.on("click", _this._click1);
+		this._enableReturnDrag(this.button_1, "n1b");
 	}
 	this.frame_245 = function() {
-		var _this = this;
-		/*
-		Mueve la cabeza lectora a la etiqueta de fotograma especificada en la línea de tiempo y detiene la película.
-		Se puede utilizar en la línea de tiempo principal o en líneas de tiempo de clips de película.
-		*/
-		_this.gotoAndStop('fin');
+		this.gotoAndStop('fin');
 	}
 	this.frame_265 = function() {
 		this.stop();
-		
-		var _this = this;
-		
-		if (_this._click2) _this.button_2.off("click", _this._click2);
-		
-		_this._click2 = function(){
-		
-		    _this.gotoAndPlay("n2b");
-		
-		};
-		
-		_this.button_2.on("click", _this._click2);
+		this._enableReturnDrag(this.button_2, "n2b");
 	}
 	this.frame_285 = function() {
-		var _this = this;
-		/*
-		Mueve la cabeza lectora a la etiqueta de fotograma especificada en la línea de tiempo y detiene la película.
-		Se puede utilizar en la línea de tiempo principal o en líneas de tiempo de clips de película.
-		*/
-		_this.gotoAndStop('fin');
+		this.gotoAndStop('fin');
 	}
 	this.frame_305 = function() {
 		this.stop();
-		
-		var _this = this;
-		
-		if (_this._click3) _this.button_3.off("click", _this._click3);
-		
-		_this._click3 = function(){
-		
-		    _this.gotoAndPlay("n3b");
-		
-		};
-		
-		_this.button_3.on("click", _this._click3);
+		this._enableReturnDrag(this.button_3, "n3b");
 	}
 	this.frame_325 = function() {
-		var _this = this;
-		/*
-		Mueve la cabeza lectora a la etiqueta de fotograma especificada en la línea de tiempo y detiene la película.
-		Se puede utilizar en la línea de tiempo principal o en líneas de tiempo de clips de película.
-		*/
-		_this.gotoAndStop('fin');
+		this.gotoAndStop('fin');
 	}
 	this.frame_345 = function() {
 		this.stop();
-		
-		var _this = this;
-		
-		if (_this._click4) _this.button_4.off("click", _this._click4);
-		
-		_this._click4 = function(){
-		
-		    _this.gotoAndPlay("n4b");
-		
-		};
-		
-		_this.button_4.on("click", _this._click4);
+		this._enableReturnDrag(this.button_4, "n4b");
 	}
 	this.frame_365 = function() {
-		var _this = this;
-		/*
-		Mueve la cabeza lectora a la etiqueta de fotograma especificada en la línea de tiempo y detiene la película.
-		Se puede utilizar en la línea de tiempo principal o en líneas de tiempo de clips de película.
-		*/
-		_this.gotoAndStop('fin');
+		this.gotoAndStop('fin');
 	}
 
 	// actions tween:
