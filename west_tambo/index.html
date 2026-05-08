@@ -69,7 +69,7 @@ function bindElasticBalloon(inner, outer) {
 	var dragging = false;
 	var moved = false;
 	var MAX_DRAG = 105;
-	var DRAG_FORCE = 0.48;
+	var DRAG_FORCE = 0.68; // menos resistencia: acompaña mejor al dedo en mobile
 
 	function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 	function localPoint(evt) { return inner.parent.globalToLocal(evt.stageX, evt.stageY); }
@@ -154,25 +154,14 @@ function handleComplete(evt,comp) {
 	if (createjs.Touch && createjs.Touch.enable) { createjs.Touch.enable(stage, true, false); }
 	stage.enableMouseOver(0);
 	stage.mouseMoveOutside = true;
-	stage.snapToPixelEnabled = false;
-	if (createjs.Touch && createjs.Touch.enable) { createjs.Touch.enable(stage, true, false); }
 	installElasticBalloonDrag(exportRoot);	
 	//Registers the "tick" event listener.
 	fnStartAnimation = function() {
 		stage.addChild(exportRoot);
-		// Optimización mobile: usar RAF sincronizado y evitar buscar MovieClips en cada frame.
 		createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
-		createjs.Ticker.framerate = 48; // apenas más liviano que 50/60fps, sin cambiar la lógica
+		createjs.Ticker.framerate = 60; // vuelve fluido; el alivio fuerte se hace bajando resolución interna
 		createjs.Ticker.addEventListener("tick", stage);
-
-		// Algunos MovieClips aparecen después de avanzar la timeline. Reintentamos pocas veces,
-		// no en cada tick, para no poner duro el celular/iPad.
-		var __dragInstallTries = 0;
-		var __dragInstallTimer = setInterval(function(){
-			installElasticBalloonDrag(exportRoot);
-			__dragInstallTries++;
-			if (__dragInstallTries >= 18) clearInterval(__dragInstallTimer);
-		}, 180);
+		createjs.Ticker.addEventListener("tick", function(){ installElasticBalloonDrag(exportRoot); });
 	}	    
 	//Code to support hidpi screens and responsive scaling.
 	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
