@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<!--
+	NOTES:
+	1. All tokens are represented by '$' sign in the template.
+	2. You can write your code only wherever mentioned.
+	3. All occurrences of existing tokens will be replaced by their appropriate values.
+	4. Blank lines will be removed automatically.
+	5. Remove unnecessary comments before creating your template.
+-->
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="authoring-tool" content="Adobe_Animate_CC">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>avion</title>
+<!-- write your code here -->
+
+<style>
+html, body{
+    margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#ffffff;
+    touch-action:none;
+    overscroll-behavior:none;
+}
+body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+#animation_container{
+    overflow:hidden;
+}
+canvas{
+    touch-action:none;
+    -webkit-user-select:none;
+    user-select:none;
+}
+</style>
+
+<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+<script src="avion.js"></script>
+<script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+function init() {
+	canvas = document.getElementById("canvas");
+	anim_container = document.getElementById("animation_container");
+	dom_overlay_container = document.getElementById("dom_overlay_container");
+	var comp=AdobeAn.getComposition("9EB062EA1B1A418DB3F8466E5102B28B");
+	var lib=comp.getLibrary();
+	var loader = new createjs.LoadQueue(false);
+	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
+	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
+	var lib=comp.getLibrary();
+	loader.loadManifest(lib.properties.manifest);
+}
+function handleFileLoad(evt, comp) {
+	var images=comp.getImages();	
+	if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }	
+}
+function handleComplete(evt,comp) {
+	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	var queue = evt.target;
+	var ssMetadata = lib.ssMetadata;
+	for(i=0; i<ssMetadata.length; i++) {
+		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
+	}
+	exportRoot = new lib.avion();
+	stage = new lib.Stage(canvas);	
+	//Registers the "tick" event listener.
+	fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+		createjs.Touch.enable(stage, true, false);
+		stage.enableMouseOver(10);
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+		setupAvionTouchController();
+	}	    
+	//Code to support hidpi screens and responsive scaling.
+	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+}
+</script>
+<!-- write your code here -->
+
+<script>
+/*
+Control interactivo agregado:
+- El avión entra y frena suave en el frame 31 de Animate.
+- Luego el usuario arrastra horizontalmente para girar.
+- Al soltar, queda envión con fricción suave, como la lógica de la ficha.
+*/
+function setupAvionTouchController(){
+    if(!exportRoot || !exportRoot.instance || !stage){ return; }
+
+    var avion = exportRoot.instance;
+    var totalFrames = Math.max(1, avion.totalFrames || 50);
+    var stopFrame = 30; // Frame 31 visual de Animate, CreateJS cuenta desde 0.
+    var frameFloat = 0;
+    var velocity = 1.15;
+    var isDragging = false;
+    var lastX = 0;
+    var lastTime = Date.now();
+    var phase = "intro";
+
+    avion.stop();
+    avion.gotoAndStop(0);
+
+    function wrapFrame(v){
+        v = v % totalFrames;
+        if(v < 0){ v += totalFrames; }
+        return v;
+    }
+
+    function gotoFloatFrame(v){
+        frameFloat = wrapFrame(v);
+        avion.gotoAndStop(Math.round(frameFloat) % totalFrames);
+    }
+
+    function tickControl(){
+        if(phase === "intro"){
+            var remaining = stopFrame - frameFloat;
+
+            if(remaining <= 0.12){
+                frameFloat = stopFrame;
+                velocity = 0;
+                phase = "ready";
+                avion.gotoAndStop(stopFrame);
+                return;
+            }
+
+            // Avanza normal al principio y frena suave cerca del frame 31.
+            var step = Math.max(0.10, Math.min(1.25, remaining * 0.16));
+            frameFloat += step;
+            avion.gotoAndStop(Math.round(frameFloat));
+            return;
+        }
+
+        if(!isDragging){
+            if(Math.abs(velocity) > 0.015){
+                gotoFloatFrame(frameFloat + velocity);
+                velocity *= 0.955; // freno suave y vueltas con envión
+            }else{
+                velocity = 0;
+            }
+        }
+    }
+
+    createjs.Ticker.addEventListener("tick", tickControl);
+
+    stage.on("stagemousedown", function(evt){
+        phase = "manual";
+        isDragging = true;
+        lastX = evt.stageX;
+        lastTime = Date.now();
+        velocity = 0;
+    });
+
+    stage.on("stagemousemove", function(evt){
+        if(!isDragging){ return; }
+
+        var now = Date.now();
+        var dx = evt.stageX - lastX;
+        var dt = Math.max(16, now - lastTime);
+
+        // Sensibilidad: más bajo = necesita más dedo; más alto = gira más rápido.
+        var dragStep = dx * 0.075;
+        gotoFloatFrame(frameFloat + dragStep);
+
+        // Velocidad de salida para que al soltar tenga envión.
+        velocity = dragStep * (16 / dt) * 1.35;
+
+        lastX = evt.stageX;
+        lastTime = now;
+    });
+
+    stage.on("stagemouseup", function(){
+        isDragging = false;
+
+        // Limita enviones absurdos, pero permite varias vueltas.
+        if(velocity > 4.5){ velocity = 4.5; }
+        if(velocity < -4.5){ velocity = -4.5; }
+    });
+}
+</script>
+
+</head>
+<body onload="init();" style="margin:0px;">
+	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1080px; height:1920px">
+		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
+		</div>
+	</div>
+</body>
+</html>
