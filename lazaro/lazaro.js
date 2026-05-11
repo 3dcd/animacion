@@ -1607,12 +1607,12 @@ if (reversed == null) { reversed = false; }
 	this.instance = new lib.ClipGroup_19();
 	this.instance.setTransform(88.5,97.5,1,1,0,0,0,88.5,97.5);
 
-	this.timeline.addTween(cjs.Tween.get(this.instance).wait(128));
+	this.timeline.addTween(cjs.Tween.get(this.instance).wait(5).to({x:88.55},0).wait(2).to({x:88.6},0).wait(1).to({x:88.65},0).wait(1).to({x:88.7},0).wait(1).to({x:88.75},0).wait(1).to({x:88.8},0).wait(1).to({x:88.85},0).wait(1).to({x:88.95},0).wait(1).to({x:89.05},0).wait(1).to({x:89.1},0).wait(1).to({x:89.2},0).wait(1).to({x:89.3},0).wait(1).to({x:89.45},0).wait(1).to({x:89.55},0).wait(1).to({x:89.7},0).wait(1).to({x:89.8},0).wait(1).to({x:89.95},0).wait(1).to({x:90.1},0).wait(1).to({x:90.3},0).wait(1).to({x:90.45},0).wait(1).to({x:90.65},0).wait(1).to({x:90.85},0).wait(1).to({x:91.05},0).wait(1).to({x:91.25},0).wait(1).to({x:91.45},0).wait(1).to({x:91.65},0).wait(1).to({x:91.9},0).wait(1).to({x:92.15},0).wait(1).to({x:92.4},0).wait(1).to({x:92.65},0).wait(1).to({x:92.9},0).wait(1).to({x:93.15},0).wait(1).to({x:93.4},0).wait(1).to({x:93.65},0).wait(1).to({x:93.9},0).wait(1).to({x:94.2},0).wait(1).to({x:94.45},0).wait(1).to({x:94.7},0).wait(1).to({x:94.95},0).wait(1).to({x:95.2},0).wait(1).to({x:95.45},0).wait(1).to({x:95.65},0).wait(1).to({x:95.9},0).wait(1).to({x:96.1},0).wait(1).to({x:96.3},0).wait(1).to({x:96.5},0).wait(1).to({x:96.7},0).wait(1).to({x:96.9},0).wait(1).to({x:97.05},0).wait(1).to({x:97.2},0).wait(1).to({x:97.35},0).wait(1).to({x:97.5},0).wait(1).to({x:97.6},0).wait(1).to({x:97.75},0).wait(1).to({x:97.85},0).wait(1).to({x:97.95},0).wait(1).to({x:98.05},0).wait(1).to({x:98.1},0).wait(1).to({x:98.2},0).wait(1).to({x:98.25},0).wait(1).to({x:98.3},0).wait(1).to({x:98.35},0).wait(1).to({x:98.4},0).wait(2).to({x:98.45},0).wait(3).to({x:98.5},0).wait(1).to({x:98.45},0).wait(3).to({x:98.4},0).wait(1).to({x:98.35},0).wait(1).to({x:98.3},0).wait(1).to({x:98.25},0).wait(1).to({x:98.15},0).wait(1).to({x:98.05},0).wait(1).to({x:97.95},0).wait(1).to({x:97.85},0).wait(1).to({x:97.7},0).wait(1).to({x:97.55},0).wait(1).to({x:97.4},0).wait(1).to({x:97.25},0).wait(1).to({x:97.05},0).wait(1).to({x:96.85},0).wait(1).to({x:96.6},0).wait(1).to({x:96.35},0).wait(1).to({x:96.1},0).wait(1).to({x:95.85},0).wait(1).to({x:95.55},0).wait(1).to({x:95.25},0).wait(1).to({x:94.95},0).wait(1).to({x:94.6},0).wait(1).to({x:94.3},0).wait(1).to({x:93.95},0).wait(1).to({x:93.6},0).wait(1).to({x:93.25},0).wait(1).to({x:92.9},0).wait(1).to({x:92.55},0).wait(1).to({x:92.2},0).wait(1).to({x:91.85},0).wait(1).to({x:91.55},0).wait(1).to({x:91.2},0).wait(1).to({x:90.9},0).wait(1).to({x:90.65},0).wait(1).to({x:90.35},0).wait(1).to({x:90.1},0).wait(1).to({x:89.9},0).wait(1).to({x:89.7},0).wait(1).to({x:89.5},0).wait(1).to({x:89.3},0).wait(1).to({x:89.15},0).wait(1).to({x:89},0).wait(1).to({x:88.9},0).wait(1).to({x:88.8},0).wait(1).to({x:88.7},0).wait(1).to({x:88.65},0).wait(1).to({x:88.6},0).wait(1).to({x:88.55},0).wait(1).to({x:88.5},0).wait(3));
 
 	this._renderFirstFrame();
 
 }).prototype = p = new cjs.MovieClip();
-p.nominalBounds = new cjs.Rectangle(0,0,177,195);
+p.nominalBounds = new cjs.Rectangle(0,0,187,195);
 
 
 (lib.ClipGroup_4_0 = function(mode,startPosition,loop,reversed) {
@@ -1990,8 +1990,8 @@ lib.properties = {
 	color: "#FFFFFF",
 	opacity: 1.00,
 	manifest: [
-		{src:"images/lazaro_atlas_1.png?1778510767142", id:"lazaro_atlas_1"},
-		{src:"images/lazaro_atlas_2.png?1778510767142", id:"lazaro_atlas_2"}
+		{src:"images/lazaro_atlas_1.png?1778511367342", id:"lazaro_atlas_1"},
+		{src:"images/lazaro_atlas_2.png?1778511367342", id:"lazaro_atlas_2"}
 	],
 	preloads: []
 };
