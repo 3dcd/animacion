@@ -1990,8 +1990,8 @@ lib.properties = {
 	color: "#FFFFFF",
 	opacity: 1.00,
 	manifest: [
-		{src:"images/lazaro_atlas_1.png?1778511367342", id:"lazaro_atlas_1"},
-		{src:"images/lazaro_atlas_2.png?1778511367342", id:"lazaro_atlas_2"}
+		{src:"images/lazaro_atlas_1.png", id:"lazaro_atlas_1"},
+		{src:"images/lazaro_atlas_2.png", id:"lazaro_atlas_2"}
 	],
 	preloads: []
 };
