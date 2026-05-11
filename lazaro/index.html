@@ -44,6 +44,7 @@ function handleComplete(evt,comp) {
 		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
 	}
 	exportRoot = new lib.lazaro();
+	exportRoot.addEventListener("tick", AdobeAn.handleFilterCache);
 	stage = new lib.Stage(canvas);	
 	//Registers the "tick" event listener.
 	fnStartAnimation = function() {
@@ -52,171 +53,90 @@ function handleComplete(evt,comp) {
 		createjs.Ticker.addEventListener("tick", stage);
 	}	    
 	//Code to support hidpi screens and responsive scaling.
-	window.lockedMobileFit(false);	
+	window.lockedMobileFit();	
 	AdobeAn.compositionLoaded(lib.properties.id);
-	window.lockedMobileFit && window.lockedMobileFit(true);
 	fnStartAnimation();
 }
 </script>
 <!-- write your code here -->
 
 <style>
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  overflow: hidden !important;
-  background: #000 !important;
-  position: fixed !important;
-  inset: 0 !important;
-  overscroll-behavior: none !important;
-  touch-action: none !important;
-  -ms-touch-action: none !important;
-  -webkit-user-select: none !important;
-  user-select: none !important;
+html,body{
+margin:0!important;
+padding:0!important;
+overflow:hidden!important;
+background:#000!important;
+width:100vw!important;
+height:100dvh!important;
+position:fixed!important;
+inset:0!important;
+touch-action:none!important;
+overscroll-behavior:none!important;
 }
 
-#animation_container {
-  position: absolute !important;
-  width: 1080px !important;
-  height: 1920px !important;
-  left: 0 !important;
-  top: 0 !important;
-  overflow: hidden !important;
-  transform-origin: 0 0 !important;
-  will-change: transform;
-  backface-visibility: hidden;
-  opacity: 0;
-  background: #000 !important;
+#animation_container{
+position:absolute!important;
+width:1080px!important;
+height:1920px!important;
+overflow:hidden!important;
+transform-origin:0 0!important;
+opacity:0;
+background:#000!important;
 }
 
-#animation_container.ready {
-  opacity: 1;
+#animation_container.ready{
+opacity:1;
 }
 
-#canvas {
-  position: absolute !important;
-  left: 0 !important;
-  top: 0 !important;
-  width: 1080px !important;
-  height: 1920px !important;
-  display: block !important;
-  touch-action: none !important;
-  background: transparent !important;
+#canvas{
+display:block!important;
+width:1080px!important;
+height:1920px!important;
 }
 
-#dom_overlay_container {
-  position: absolute !important;
-  left: 0 !important;
-  top: 0 !important;
-  width: 1080px !important;
-  height: 1920px !important;
-  overflow: hidden !important;
-  pointer-events: none !important;
-  touch-action: none !important;
+#dom_overlay_container{
+pointer-events:none!important;
 }
 </style>
 
 <script>
-(function() {
-  var STAGE_W = 1080;
-  var STAGE_H = 1920;
-  var firstShowDone = false;
-  var fitTimer = null;
+(function(){
+const SW=1080;
+const SH=1920;
 
-  function getVH() {
-    return window.innerHeight || document.documentElement.clientHeight || STAGE_H;
-  }
+function fit(){
+const c=document.getElementById('animation_container');
+const canvas=document.getElementById('canvas');
+if(!c||!canvas)return;
 
-  function getVW() {
-    return window.innerWidth || document.documentElement.clientWidth || STAGE_W;
-  }
+const vw=window.innerWidth;
+const vh=window.innerHeight;
 
-  window.lockedMobileFit = function(showWhenReady) {
-    var container = document.getElementById("animation_container");
-    var canvas = document.getElementById("canvas");
-    var overlay = document.getElementById("dom_overlay_container");
-    if (!container || !canvas) return;
+const scale=Math.min(vw/SW,vh/SH);
 
-    var vw = getVW();
-    var vh = getVH();
+const x=(vw-(SW*scale))/2;
+const y=(vh-(SH*scale))/2;
 
-    var scale = Math.min(vw / STAGE_W, vh / STAGE_H);
-    var x = Math.round((vw - STAGE_W * scale) / 2);
-    var y = Math.round((vh - STAGE_H * scale) / 2);
+c.style.transform='translate3d('+x+'px,'+y+'px,0) scale('+scale+')';
 
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.inset = "0";
-    document.body.style.width = "100vw";
-    document.body.style.height = "100dvh";
+requestAnimationFrame(()=>c.classList.add('ready'));
+}
 
-    container.style.width = STAGE_W + "px";
-    container.style.height = STAGE_H + "px";
-    container.style.transformOrigin = "0 0";
-    container.style.transform = "translate3d(" + x + "px," + y + "px,0) scale(" + scale + ")";
+document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gestureend',e=>e.preventDefault(),{passive:false});
 
-    canvas.width = STAGE_W;
-    canvas.height = STAGE_H;
-    canvas.style.width = STAGE_W + "px";
-    canvas.style.height = STAGE_H + "px";
+document.addEventListener('touchmove',function(e){
+if(e.touches.length>1)e.preventDefault();
+},{passive:false});
 
-    if (overlay) {
-      overlay.style.width = STAGE_W + "px";
-      overlay.style.height = STAGE_H + "px";
-    }
-
-    if (showWhenReady && !firstShowDone) {
-      firstShowDone = true;
-      requestAnimationFrame(function() {
-        requestAnimationFrame(function() {
-          container.classList.add("ready");
-        });
-      });
-    }
-  };
-
-  function refitSoon() {
-    clearTimeout(fitTimer);
-    fitTimer = setTimeout(function() {
-      window.lockedMobileFit(false);
-    }, 120);
-  }
-
-  function blockZoom(e) {
-    if (e.cancelable) e.preventDefault();
-    return false;
-  }
-
-  document.addEventListener("gesturestart", blockZoom, { passive:false });
-  document.addEventListener("gesturechange", blockZoom, { passive:false });
-  document.addEventListener("gestureend", blockZoom, { passive:false });
-
-  document.addEventListener("touchstart", function(e) {
-    if (e.touches && e.touches.length > 1 && e.cancelable) e.preventDefault();
-  }, { passive:false });
-
-  document.addEventListener("touchmove", function(e) {
-    if (e.touches && e.touches.length > 1 && e.cancelable) e.preventDefault();
-  }, { passive:false });
-
-  var lastTouchEnd = 0;
-  document.addEventListener("touchend", function(e) {
-    var now = Date.now();
-    if (now - lastTouchEnd <= 300 && e.cancelable) e.preventDefault();
-    lastTouchEnd = now;
-  }, { passive:false });
-
-  window.addEventListener("resize", refitSoon);
-  window.addEventListener("orientationchange", function() { setTimeout(refitSoon, 300); });
-
-  window.addEventListener("load", function() {
-    setTimeout(function() { window.lockedMobileFit(true); }, 150);
-    setTimeout(function() { window.lockedMobileFit(true); }, 600);
-  });
+window.addEventListener('resize',()=>setTimeout(fit,80));
+window.addEventListener('orientationchange',()=>setTimeout(fit,300));
+window.addEventListener('load',()=>{
+setTimeout(fit,80);
+setTimeout(fit,500);
+});
+window.lockedMobileFit=fit;
 })();
 </script>
 
