@@ -92,14 +92,16 @@ function handleComplete(evt,comp) {
 <script>
 /*
 Control interactivo agregado:
-- El avión entra y frena suave en el frame 31 de Animate.
-- Luego el usuario arrastra horizontalmente para girar.
-- Al soltar, queda envión con fricción suave, como la lógica de la ficha.
+- Respeta tu animación interna, incluida la hélice.
+- El MovieClip interno del avión entra y frena suave en el frame 31.
+- Luego el dedo arrastra horizontalmente para girar.
+- Al soltar, queda envión con fricción suave.
+- El stage general puede seguir con su movimiento de subida/bajada.
 */
 function setupAvionTouchController(){
     if(!exportRoot || !exportRoot.instance || !stage){ return; }
 
-    var avion = exportRoot.instance;
+    var avion = exportRoot.instance; // MovieClip interno con las vistas del avión.
     var totalFrames = Math.max(1, avion.totalFrames || 50);
     var stopFrame = 30; // Frame 31 visual de Animate, CreateJS cuenta desde 0.
     var frameFloat = 0;
@@ -109,6 +111,7 @@ function setupAvionTouchController(){
     var lastTime = Date.now();
     var phase = "intro";
 
+    // Frenamos solo el MC de vistas del avión, no la hélice interna ni el stage general.
     avion.stop();
     avion.gotoAndStop(0);
 
@@ -135,7 +138,7 @@ function setupAvionTouchController(){
                 return;
             }
 
-            // Avanza normal al principio y frena suave cerca del frame 31.
+            // Avanza y se frena suavemente cerca del frame 31.
             var step = Math.max(0.10, Math.min(1.25, remaining * 0.16));
             frameFloat += step;
             avion.gotoAndStop(Math.round(frameFloat));
@@ -145,7 +148,7 @@ function setupAvionTouchController(){
         if(!isDragging){
             if(Math.abs(velocity) > 0.015){
                 gotoFloatFrame(frameFloat + velocity);
-                velocity *= 0.955; // freno suave y vueltas con envión
+                velocity *= 0.955;
             }else{
                 velocity = 0;
             }
@@ -169,11 +172,9 @@ function setupAvionTouchController(){
         var dx = evt.stageX - lastX;
         var dt = Math.max(16, now - lastTime);
 
-        // Sensibilidad: más bajo = necesita más dedo; más alto = gira más rápido.
         var dragStep = dx * 0.075;
         gotoFloatFrame(frameFloat + dragStep);
 
-        // Velocidad de salida para que al soltar tenga envión.
         velocity = dragStep * (16 / dt) * 1.35;
 
         lastX = evt.stageX;
@@ -183,7 +184,6 @@ function setupAvionTouchController(){
     stage.on("stagemouseup", function(){
         isDragging = false;
 
-        // Limita enviones absurdos, pero permite varias vueltas.
         if(velocity > 4.5){ velocity = 4.5; }
         if(velocity < -4.5){ velocity = -4.5; }
     });
