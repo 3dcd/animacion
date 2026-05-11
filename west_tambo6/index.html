@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="authoring-tool" content="Adobe_Animate_CC">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>west_tambo3</title>
+<style>
+html, body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	background: #fff;
+	position: fixed;
+	inset: 0;
+	overscroll-behavior: none;
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+	touch-action: none;
+}
+#animation_container {
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	width: 1080px;
+	height: 1920px;
+	background: #fff;
+	overflow: hidden;
+	transform-origin: 0 0;
+	will-change: transform;
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
+}
+#canvas {
+	position: absolute;
+	left: 0;
+	top: 0;
+	display: block;
+	width: 1080px;
+	height: 1920px;
+	background: #fff;
+	outline: none;
+	touch-action: none;
+	-webkit-tap-highlight-color: transparent;
+}
+#dom_overlay_container {
+	pointer-events: none;
+	overflow: hidden;
+	width: 1080px;
+	height: 1920px;
+	position: absolute;
+	left: 0;
+	top: 0;
+	display: block;
+}
+</style>
+<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+<script src="west_tambo3.js"></script>
+<script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+var ORIGINAL_W = 1080;
+var ORIGINAL_H = 1920;
+
+function lockBrowserGestures() {
+	['touchstart','touchmove','gesturestart','gesturechange','gestureend'].forEach(function(type) {
+		document.addEventListener(type, function(e) { e.preventDefault(); }, { passive: false });
+	});
+	window.addEventListener('scroll', function(){ window.scrollTo(0, 0); }, { passive: true });
+}
+
+function resizeStageContain() {
+	if (!anim_container) return;
+	var vw = window.innerWidth || document.documentElement.clientWidth || ORIGINAL_W;
+	var vh = window.innerHeight || document.documentElement.clientHeight || ORIGINAL_H;
+	var safeW = Math.max(1, vw);
+	var safeH = Math.max(1, vh);
+	var scale = Math.min(safeW / ORIGINAL_W, safeH / ORIGINAL_H);
+	var x = Math.round((safeW - ORIGINAL_W * scale) * 0.5);
+	var y = Math.round((safeH - ORIGINAL_H * scale) * 0.5);
+	anim_container.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + scale + ')';
+	anim_container.style.left = '0px';
+	anim_container.style.top = '0px';
+	window.scrollTo(0, 0);
+}
+
+function installMobileDragInteractions(root, stg) {
+	if (!root || !stg || root.__mobileDragWatcherInstalled) return;
+	root.__mobileDragWatcherInstalled = true;
+
+	var INTERACTIVE_FRAMES = {
+		205: { button_1:'n1',  button_2:'n2',  button_3:'n3',  button_3_b_1:'n3',  button_3_b_2:'n3',  button_4:'n4'  },
+		225: { button_1:'n1b' },
+		265: { button_2:'n2b' },
+		305: { button_3:'n3b', button_3_b_1:'n3b', button_3_b_2:'n3b' },
+		345: { button_4:'n4b' }
+	};
+	var RADIUS = 86;
+	var RETURN_MS = 720;
+	var PLAY_AFTER_RETURN_MS = 35;
+
+	function removeAnimateClick(button) {
+		if (!button) return;
+		try { button.removeAllEventListeners('click'); } catch(e) {}
+	}
+
+	function isInteractiveFrame() {
+		return !!INTERACTIVE_FRAMES[root.currentFrame];
+	}
+
+	function labelFor(key) {
+		var map = INTERACTIVE_FRAMES[root.currentFrame];
+		return map && map[key];
+	}
+
+	function parentLocalPoint(parent, stageX, stageY) {
+		if (parent && parent.globalToLocal) return parent.globalToLocal(stageX, stageY);
+		return { x: stageX, y: stageY };
+	}
+
+	function softCircularClamp(dx, dy) {
+		var dist = Math.sqrt(dx * dx + dy * dy);
+		if (dist <= RADIUS || dist === 0) return { x: dx, y: dy };
+		// Borde circular con sensación de goma: no golpea seco contra un cuadrado ni contra un límite duro.
+		var extra = Math.min(18, (dist - RADIUS) * 0.16);
+		var limited = RADIUS + extra;
+		return { x: dx / dist * limited, y: dy / dist * limited };
+	}
+
+	function addDrag(button, key) {
+		if (!button || button.__mobileDragReady === key) return;
+		button.__mobileDragReady = key;
+		button.cursor = 'pointer';
+		button.mouseEnabled = true;
+		button.mouseChildren = true;
+		removeAnimateClick(button);
+
+		var homeX = button.x;
+		var homeY = button.y;
+		var pressOffsetX = 0;
+		var pressOffsetY = 0;
+		var active = false;
+		var released = false;
+		var releaseLabel = null;
+
+		button.on('mousedown', function(evt) {
+			var targetLabel = labelFor(key);
+			if (!targetLabel || !isInteractiveFrame()) return;
+			if (evt && evt.stopPropagation) evt.stopPropagation();
+			active = true;
+			released = false;
+			releaseLabel = targetLabel;
+			homeX = button.x;
+			homeY = button.y;
+			createjs.Tween.removeTweens(button);
+			var p = parentLocalPoint(button.parent, evt.stageX, evt.stageY);
+			pressOffsetX = button.x - p.x;
+			pressOffsetY = button.y - p.y;
+		});
+
+		button.on('pressmove', function(evt) {
+			if (!active || !isInteractiveFrame()) return;
+			if (evt && evt.nativeEvent && evt.nativeEvent.preventDefault) evt.nativeEvent.preventDefault();
+			if (evt && evt.stopPropagation) evt.stopPropagation();
+			var p = parentLocalPoint(button.parent, evt.stageX, evt.stageY);
+			var nx = p.x + pressOffsetX;
+			var ny = p.y + pressOffsetY;
+			var d = softCircularClamp(nx - homeX, ny - homeY);
+			button.x = homeX + d.x;
+			button.y = homeY + d.y;
+			stg.update();
+		});
+
+		button.on('pressup', function(evt) {
+			if (!active || released) return;
+			if (evt && evt.nativeEvent && evt.nativeEvent.preventDefault) evt.nativeEvent.preventDefault();
+			if (evt && evt.stopPropagation) evt.stopPropagation();
+			active = false;
+			released = true;
+			var labelToPlay = releaseLabel || labelFor(key);
+			createjs.Tween.removeTweens(button);
+			createjs.Tween.get(button, { override: true })
+				.to({ x: homeX, y: homeY }, RETURN_MS, createjs.Ease.quartOut)
+				.call(function(){
+					setTimeout(function(){
+						if (root && isInteractiveFrame() && labelToPlay) root.gotoAndPlay(labelToPlay);
+					}, PLAY_AFTER_RETURN_MS);
+				});
+		});
+	}
+
+	function setupDrags() {
+		if (!root) return;
+		addDrag(root.button_1, 'button_1');
+		addDrag(root.button_2, 'button_2');
+		addDrag(root.button_3, 'button_3');
+		addDrag(root.button_4, 'button_4');
+
+		if (root.button_3) {
+			addDrag(root.button_3.button_3_b_1, 'button_3_b_1');
+			addDrag(root.button_3.button_3_b_2, 'button_3_b_2');
+		}
+	}
+
+	createjs.Ticker.on('tick', function() {
+		if (!root) return;
+		setupDrags();
+		if (isInteractiveFrame()) {
+			removeAnimateClick(root.button_1);
+			removeAnimateClick(root.button_2);
+			removeAnimateClick(root.button_3);
+			removeAnimateClick(root.button_4);
+			if (root.button_3) {
+				removeAnimateClick(root.button_3.button_3_b_1);
+				removeAnimateClick(root.button_3.button_3_b_2);
+			}
+		}
+	});
+}
+function init() {
+	lockBrowserGestures();
+	canvas = document.getElementById("canvas");
+	anim_container = document.getElementById("animation_container");
+	dom_overlay_container = document.getElementById("dom_overlay_container");
+	resizeStageContain();
+	var comp=AdobeAn.getComposition("056D7DD7403046F3A38011080527CFDA");
+	var lib=comp.getLibrary();
+	var loader = new createjs.LoadQueue(false);
+	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
+	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
+	loader.loadManifest(lib.properties.manifest);
+}
+function handleFileLoad(evt, comp) {
+	var images=comp.getImages();
+	if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }
+}
+function handleComplete(evt,comp) {
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	var queue = evt.target;
+	var ssMetadata = lib.ssMetadata;
+	for(var i=0; i<ssMetadata.length; i++) {
+		ss[ssMetadata[i].name] = new createjs.SpriteSheet({"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames});
+	}
+	exportRoot = new lib.west_tambo3();
+	stage = new lib.Stage(canvas);
+	createjs.Touch.enable(stage, true, false);
+	stage.enableMouseOver(0);
+	stage.mouseMoveOutside = true;
+	fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+		createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+		installMobileDragInteractions(exportRoot, stage);
+	}
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+	resizeStageContain();
+}
+window.addEventListener('resize', resizeStageContain, { passive: true });
+window.addEventListener('orientationchange', function(){ setTimeout(resizeStageContain, 250); }, { passive: true });
+</script>
+</head>
+<body onload="init();">
+	<div id="animation_container">
+		<canvas id="canvas" width="1080" height="1920"></canvas>
+		<div id="dom_overlay_container"></div>
+	</div>
+</body>
+</html>
