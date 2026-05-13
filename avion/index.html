@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<!--
+	NOTES:
+	1. All tokens are represented by '$' sign in the template.
+	2. You can write your code only wherever mentioned.
+	3. All occurrences of existing tokens will be replaced by their appropriate values.
+	4. Blank lines will be removed automatically.
+	5. Remove unnecessary comments before creating your template.
+-->
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="authoring-tool" content="Adobe_Animate_CC">
+<title>avion2</title>
+<!-- write your code here -->
+<script src="https://code.createjs.com/1.0.0/createjs.min.js">
+function installPlaneDragInteraction() {
+	if (!stage || !exportRoot || !exportRoot.instance) return;
+
+	var plane = exportRoot.instance;
+	var s1 = plane.s_1;
+	var s2 = plane.s_2;
+	var s3 = plane.s_3;
+	if (!s1 || !s2 || !s3) return;
+
+	// Dejamos la línea de tiempo principal quieta y controlamos sólo los frames de S1/S2/S3.
+	if (exportRoot.stop) exportRoot.stop();
+	if (plane.stop) plane.stop();
+
+	var totalFrames = 50;
+	var framePos = 0;
+	var velocity = 0;
+	var dragging = false;
+	var lastStageX = 0;
+	var lastStageY = 0;
+	var startStageY = 0;
+	var activeLayer = 1;
+
+	// Ajustes finos para sensación móvil.
+	var dragSensitivity = 0.18;     // Más alto = gira más rápido al arrastrar.
+	var inertiaFriction = 0.94;     // Más alto = más embión.
+	var velocityBoost = 1.15;       // Fuerza del impulso al soltar.
+	var stopThreshold = 0.015;
+	var verticalZone = 90;          // Zona media para mostrar S2.
+
+	function setVisibleLayer(layer) {
+		activeLayer = layer;
+		s1.visible = layer === 1;
+		s2.visible = layer === 2;
+		s3.visible = layer === 3;
+	}
+
+	function updateLayerByY(stageY) {
+		var dy = stageY - startStageY;
+		if (dy < -verticalZone) {
+			setVisibleLayer(3); // dedo hacia arriba
+		} else if (dy > verticalZone) {
+			setVisibleLayer(1); // dedo hacia abajo
+		} else {
+			setVisibleLayer(2); // punto medio
+		}
+	}
+
+	function wrapFrame(value) {
+		value = value % totalFrames;
+		return value < 0 ? value + totalFrames : value;
+	}
+
+	function renderFrame() {
+		var frame = Math.round(wrapFrame(framePos));
+		if (s1.gotoAndStop) s1.gotoAndStop(frame);
+		if (s2.gotoAndStop) s2.gotoAndStop(frame);
+		if (s3.gotoAndStop) s3.gotoAndStop(frame);
+	}
+
+	setVisibleLayer(1);
+	renderFrame();
+	stage.enableMouseOver(0);
+	createjs.Touch.enable(stage, false, true);
+	stage.mouseMoveOutside = true;
+
+	stage.on("stagemousedown", function(evt) {
+		dragging = true;
+		lastStageX = evt.stageX;
+		lastStageY = evt.stageY;
+		startStageY = evt.stageY;
+		velocity = 0;
+		updateLayerByY(evt.stageY);
+		renderFrame();
+	});
+
+	stage.on("stagemousemove", function(evt) {
+		if (!dragging) return;
+		var dx = evt.stageX - lastStageX;
+		framePos = wrapFrame(framePos + dx * dragSensitivity);
+		velocity = dx * dragSensitivity * velocityBoost;
+		lastStageX = evt.stageX;
+		lastStageY = evt.stageY;
+		updateLayerByY(evt.stageY);
+		renderFrame();
+	});
+
+	stage.on("stagemouseup", function(evt) {
+		dragging = false;
+		if (evt) updateLayerByY(evt.stageY);
+	});
+
+	createjs.Ticker.on("tick", function() {
+		if (!dragging && Math.abs(velocity) > stopThreshold) {
+			framePos = wrapFrame(framePos + velocity);
+			velocity *= inertiaFriction;
+			renderFrame();
+		}
+	});
+}
+
+</script>
+<script src="avion2.js"></script>
+<script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+function init() {
+	canvas = document.getElementById("canvas");
+	anim_container = document.getElementById("animation_container");
+	dom_overlay_container = document.getElementById("dom_overlay_container");
+	var comp=AdobeAn.getComposition("9EB062EA1B1A418DB3F8466E5102B28B");
+	var lib=comp.getLibrary();
+	var loader = new createjs.LoadQueue(false);
+	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
+	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
+	var lib=comp.getLibrary();
+	loader.loadManifest(lib.properties.manifest);
+}
+function handleFileLoad(evt, comp) {
+	var images=comp.getImages();	
+	if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }	
+}
+function handleComplete(evt,comp) {
+	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	var queue = evt.target;
+	var ssMetadata = lib.ssMetadata;
+	for(i=0; i<ssMetadata.length; i++) {
+		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
+	}
+	exportRoot = new lib.avion2();
+	stage = new lib.Stage(canvas);	
+	//Registers the "tick" event listener.
+	fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+	}	    
+	//Code to support hidpi screens and responsive scaling.
+	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+	installPlaneDragInteraction();
+}
+
+</script>
+<!-- write your code here -->
+<style>
+	html, body {
+		margin: 0;
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		background: #ffffff;
+		touch-action: none;
+		overscroll-behavior: none;
+	}
+	#animation_container {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		transform-origin: center center;
+		overflow: hidden;
+	}
+	#canvas {
+		touch-action: none;
+		user-select: none;
+		-webkit-user-select: none;
+		-webkit-touch-callout: none;
+	}
+</style>
+</head>
+<body onload="init();" style="margin:0px;">
+	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1080px; height:1920px">
+		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
+		</div>
+	</div>
+</body>
+</html>
