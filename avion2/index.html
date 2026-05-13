@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<!--
+	NOTES:
+	1. All tokens are represented by '$' sign in the template.
+	2. You can write your code only wherever mentioned.
+	3. All occurrences of existing tokens will be replaced by their appropriate values.
+	4. Blank lines will be removed automatically.
+	5. Remove unnecessary comments before creating your template.
+-->
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="UTF-8">
+<meta name="authoring-tool" content="Adobe_Animate_CC">
+<title>avion2</title>
+<!-- write your code here -->
+<script src="https://code.createjs.com/1.0.0/createjs.min.js">
+function setupPlaneInteraction() {
+	var plane = exportRoot && exportRoot.instance;
+	if (!plane) return;
+
+	// La animación exportada tiene 50 frames. Animate usa base 0: frame visual 31 = índice 30.
+	var TOTAL = 50;
+	var currentFrame = 30;
+	var velocity = 0;
+	var dragging = false;
+	var lastX = 0;
+	var lastY = 0;
+	var startY = 0;
+	var lastTime = 0;
+	var pxPerFrame = 18; // sensibilidad horizontal: más chico = gira más rápido
+
+	// Frenamos la línea principal para que no haga el vaivén solo.
+	exportRoot.stop();
+	plane.stop();
+
+	var levels = [plane.s_1, plane.s_2, plane.s_3];
+	levels.forEach(function(mc){ if (mc) { mc.stop(); mc.visible = false; } });
+
+	function wrapFrame(f) {
+		f = f % TOTAL;
+		if (f < 0) f += TOTAL;
+		return f;
+	}
+
+	function showOnly(levelIndex) {
+		// levelIndex: 0 = S1 arriba, 1 = S2 medio, 2 = S3 abajo
+		levels.forEach(function(mc, i){ if (mc) mc.visible = (i === levelIndex); });
+	}
+
+	function applyFrame() {
+		currentFrame = wrapFrame(currentFrame);
+		plane.gotoAndStop(Math.round(currentFrame));
+		levels.forEach(function(mc){ if (mc) mc.gotoAndStop(Math.round(currentFrame)); });
+		stage.update();
+	}
+
+	function updateVertical(y) {
+		var dy = y - startY;
+		if (dy < -70) showOnly(0);      // subís el dedo: S1
+		else if (dy > 70) showOnly(2);  // bajás el dedo: S3
+		else showOnly(1);               // zona media: S2
+		stage.update();
+	}
+
+	// Estado inicial: de frente, piso medio.
+	showOnly(1);
+	applyFrame();
+
+	function pointerPos(evt) {
+		var e = evt.changedTouches ? evt.changedTouches[0] : evt;
+		return { x: e.clientX, y: e.clientY };
+	}
+
+	function down(evt) {
+		if (evt.cancelable) evt.preventDefault();
+		var p = pointerPos(evt);
+		dragging = true;
+		lastX = p.x;
+		lastY = p.y;
+		startY = p.y;
+		lastTime = performance.now();
+		velocity = 0;
+		updateVertical(p.y);
+	}
+
+	function move(evt) {
+		if (!dragging) return;
+		if (evt.cancelable) evt.preventDefault();
+		var p = pointerPos(evt);
+		var now = performance.now();
+		var dx = p.x - lastX;
+		var dt = Math.max(16, now - lastTime);
+
+		currentFrame += dx / pxPerFrame;
+		velocity = (dx / pxPerFrame) * (16 / dt);
+		lastX = p.x;
+		lastY = p.y;
+		lastTime = now;
+
+		updateVertical(p.y);
+		applyFrame();
+	}
+
+	function up(evt) {
+		if (evt && evt.cancelable) evt.preventDefault();
+		dragging = false;
+	}
+
+	canvas.addEventListener('touchstart', down, {passive:false});
+	canvas.addEventListener('touchmove', move, {passive:false});
+	canvas.addEventListener('touchend', up, {passive:false});
+	canvas.addEventListener('touchcancel', up, {passive:false});
+	canvas.addEventListener('mousedown', down);
+	window.addEventListener('mousemove', move);
+	window.addEventListener('mouseup', up);
+
+	createjs.Ticker.addEventListener('tick', function() {
+		if (!dragging && Math.abs(velocity) > 0.001) {
+			currentFrame += velocity;
+			velocity *= 0.94; // embión suave que se frena
+			applyFrame();
+		}
+	});
+}
+
+</script>
+<script src="avion2.js"></script>
+<script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+function init() {
+	canvas = document.getElementById("canvas");
+	anim_container = document.getElementById("animation_container");
+	dom_overlay_container = document.getElementById("dom_overlay_container");
+	var comp=AdobeAn.getComposition("9EB062EA1B1A418DB3F8466E5102B28B");
+	var lib=comp.getLibrary();
+	var loader = new createjs.LoadQueue(false);
+	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
+	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
+	var lib=comp.getLibrary();
+	loader.loadManifest(lib.properties.manifest);
+}
+function handleFileLoad(evt, comp) {
+	var images=comp.getImages();	
+	if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }	
+}
+function handleComplete(evt,comp) {
+	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	var queue = evt.target;
+	var ssMetadata = lib.ssMetadata;
+	for(i=0; i<ssMetadata.length; i++) {
+		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
+	}
+	exportRoot = new lib.avion2();
+	stage = new lib.Stage(canvas);	
+	//Registers the "tick" event listener.
+	fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+
+		setupPlaneInteraction();
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+	}	    
+	//Code to support hidpi screens and responsive scaling.
+	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+}
+</script>
+<!-- write your code here -->
+<style>
+html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#fff; touch-action:none; }
+body { display:flex; align-items:center; justify-content:center; }
+#animation_container { position:relative; overflow:hidden; touch-action:none; }
+#canvas { touch-action:none; }
+</style>
+</head>
+<body onload="init();" style="margin:0px;">
+	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1080px; height:1920px">
+		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
+		</div>
+	</div>
+</body>
+</html>
