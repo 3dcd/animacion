@@ -10,8 +10,14 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="authoring-tool" content="Adobe_Animate_CC">
 <title>avion2</title>
+<style>
+html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#fff; touch-action:none; -webkit-user-select:none; user-select:none; overscroll-behavior:none; }
+#animation_container, #canvas, #dom_overlay_container { touch-action:none; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color: rgba(0,0,0,0); }
+canvas { outline:none; }
+</style>
 <!-- write your code here -->
 <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
 <script src="avion2.js"></script>
@@ -51,127 +57,139 @@ function handleComplete(evt,comp) {
 		createjs.Ticker.addEventListener("tick", stage);
 	}	    
 	//Code to support hidpi screens and responsive scaling.
-	AdobeAn.makeResponsive(false,'both',false,1,[canvas,anim_container,dom_overlay_container]);	
+	// Responsive propio: escala el escenario completo 1080x1920 sin mover el arte interno.
+	fitStageToPhone();
 	AdobeAn.compositionLoaded(lib.properties.id);
 	fnStartAnimation();
-	setupAvionTouchControl();
+	installAvionInteraction();
 }
 
-function setupAvionTouchControl() {
-	// Control externo: NO toca los símbolos gráficos internos.
-	var root = exportRoot;
-	var avion = root && root.instance; // Símbolo30: contiene s_1, s_2, s_3
-	if (!root || !avion || !avion.s_1 || !avion.s_2 || !avion.s_3) return;
-
-	var FRAME_COUNT = 50;
-	var REST_FRAME = 30; // 0-based: frame 31 de Animate
-	var currentFrame = REST_FRAME;
-	var velocity = 0;
-	var isDragging = false;
-	var lastX = 0, lastY = 0, startY = 0;
-	var viewMode = 2; // 1=s_1 arriba, 2=s_2 medio, 3=s_3 abajo
-	var stageW = 1080, stageH = 1920;
-	var baseX = 540, baseY = 960;
-
-	root.stop();
-	avion.stop();
-	avion.mouseEnabled = true;
-	avion.cursor = 'grab';
-	canvas.style.touchAction = 'none';
-	canvas.style.cursor = 'grab';
-
-	function wrapFrame(n) {
-		n = Math.round(n) % FRAME_COUNT;
-		return n < 0 ? n + FRAME_COUNT : n;
-	}
-	function setPose(mode) {
-		viewMode = mode;
-		avion.s_1.visible = mode === 1;
-		avion.s_2.visible = mode === 2;
-		avion.s_3.visible = mode === 3;
-		avion.s_1.alpha = mode === 1 ? 1 : 0;
-		avion.s_2.alpha = mode === 2 ? 1 : 0;
-		avion.s_3.alpha = mode === 3 ? 1 : 0;
-	}
-	function setFrame(frame) {
-		currentFrame = wrapFrame(frame);
-		avion.gotoAndStop(currentFrame);
-		avion.s_1.gotoAndStop(currentFrame);
-		avion.s_2.gotoAndStop(currentFrame);
-		avion.s_3.gotoAndStop(currentFrame);
-		setPose(viewMode);
-	}
-	function setPoseFromVertical(globalY) {
-		var dy = globalY - startY;
-		var threshold = Math.max(65, stageH * 0.055);
-		if (dy < -threshold) setPose(1);       // dedo hacia arriba -> S1
-		else if (dy > threshold) setPose(3);   // dedo hacia abajo -> S3
-		else setPose(2);                       // zona media -> S2
-	}
-	function centerForMobile() {
-		var w = window.innerWidth || document.documentElement.clientWidth || stageW;
-		var h = window.innerHeight || document.documentElement.clientHeight || stageH;
-		var scale = Math.min(w / stageW, h / stageH);
+function fitStageToPhone() {
+	var baseW = 1080, baseH = 1920;
+	function resize() {
+		var scale = Math.min(window.innerWidth / baseW, window.innerHeight / baseH);
+		var w = baseW * scale;
+		var h = baseH * scale;
+		anim_container.style.width = baseW + 'px';
+		anim_container.style.height = baseH + 'px';
 		anim_container.style.transformOrigin = '0 0';
 		anim_container.style.transform = 'scale(' + scale + ')';
-		anim_container.style.left = ((w - stageW * scale) / 2) + 'px';
-		anim_container.style.top = ((h - stageH * scale) / 2) + 'px';
+		anim_container.style.position = 'absolute';
+		anim_container.style.left = Math.round((window.innerWidth - w) / 2) + 'px';
+		anim_container.style.top = Math.round((window.innerHeight - h) / 2) + 'px';
+		dom_overlay_container.style.width = baseW + 'px';
+		dom_overlay_container.style.height = baseH + 'px';
 	}
-	window.addEventListener('resize', centerForMobile);
-	centerForMobile();
+	window.addEventListener('resize', resize);
+	window.addEventListener('orientationchange', resize);
+	resize();
+}
 
-	// Estado inicial: frame 31, una sola visual visible.
-	avion.x = baseX;
-	avion.y = baseY;
-	setPose(2);
-	setFrame(REST_FRAME);
+function installAvionInteraction() {
+	var holder = exportRoot && exportRoot.instance;
+	if (!holder || !holder.s_1 || !holder.s_2 || !holder.s_3) {
+		setTimeout(installAvionInteraction, 60);
+		return;
+	}
+
+	var clips = [holder.s_1, holder.s_2, holder.s_3];
+	var frameCount = 50;
+	var currentFrame = 30; // Animate frame 31, zero-based para CreateJS.
+	var velocity = 0;
+	var dragging = false;
+	var lastX = 0, lastY = 0, lastT = Date.now();
+	var verticalMode = 1; // 0 arriba/S1, 1 medio/S2, 2 abajo/S3
+	var pixelsPerFrame = 12;
+
+	function safeFrame(n) {
+		n = Math.round(n) % frameCount;
+		if (n < 0) n += frameCount;
+		return n;
+	}
+	function showOnly(mode) {
+		verticalMode = Math.max(0, Math.min(2, mode));
+		clips[0].visible = verticalMode === 0;
+		clips[1].visible = verticalMode === 1;
+		clips[2].visible = verticalMode === 2;
+		clips.forEach(function(mc) {
+			mc.alpha = 1;
+			mc.paused = true;
+			mc.mouseEnabled = false;
+		});
+	}
+	function applyFrame() {
+		currentFrame = safeFrame(currentFrame);
+		clips.forEach(function(mc) {
+			mc.gotoAndStop(currentFrame);
+			mc.paused = true;
+			mc.alpha = 1;
+		});
+		showOnly(verticalMode);
+	}
+	function chooseVertical(stageY) {
+		var p = holder.globalToLocal(stage.mouseX, stageY);
+		// Ascensor relativo al centro original del MovieClip, no al alto total del celular.
+		if (p.y < -70) return 0;
+		if (p.y > 70) return 2;
+		return 1;
+	}
+	function pointerXY(evt) {
+		return {x: evt.stageX, y: evt.stageY};
+	}
+
+	stage.enableMouseOver(0);
+	stage.mouseMoveOutside = true;
+	if (createjs.Touch && createjs.Touch.isSupported()) {
+		createjs.Touch.enable(stage, true, false);
+	}
+
+	canvas.style.touchAction = 'none';
+	anim_container.style.touchAction = 'none';
+	document.body.style.touchAction = 'none';
+	['touchstart','touchmove','touchend','touchcancel','gesturestart','gesturechange','gestureend'].forEach(function(type) {
+		window.addEventListener(type, function(e){
+			if (e && e.cancelable) e.preventDefault();
+		}, {passive:false});
+	});
 
 	stage.on('stagemousedown', function(evt) {
-		isDragging = true;
+		dragging = true;
+		var p = pointerXY(evt);
+		lastX = p.x; lastY = p.y; lastT = Date.now();
 		velocity = 0;
-		lastX = evt.stageX;
-		lastY = evt.stageY;
-		startY = evt.stageY;
-		canvas.style.cursor = 'grabbing';
-		setPoseFromVertical(evt.stageY);
+		verticalMode = chooseVertical(p.y);
+		applyFrame();
 	});
 	stage.on('stagemousemove', function(evt) {
-		if (!isDragging) return;
-		var dx = evt.stageX - lastX;
-		velocity = dx * 0.38;
-		setFrame(currentFrame + dx * 0.035);
-		setPoseFromVertical(evt.stageY);
-		lastX = evt.stageX;
-		lastY = evt.stageY;
+		if (!dragging) return;
+		var p = pointerXY(evt);
+		var now = Date.now();
+		var dx = p.x - lastX;
+		var dt = Math.max(16, now - lastT);
+		currentFrame += dx / pixelsPerFrame;
+		velocity = (dx / pixelsPerFrame) * (16 / dt);
+		verticalMode = chooseVertical(p.y);
+		lastX = p.x; lastY = p.y; lastT = now;
+		applyFrame();
 	});
-	stage.on('stagemouseup', function(evt) {
-		isDragging = false;
-		canvas.style.cursor = 'grab';
+	stage.on('stagemouseup', function() { dragging = false; });
+
+	createjs.Ticker.addEventListener('tick', function() {
+		if (!dragging && Math.abs(velocity) > 0.002) {
+			currentFrame += velocity;
+			velocity *= 0.94;
+			applyFrame();
+		}
 	});
 
-	createjs.Ticker.on('tick', function() {
-		if (isDragging) {
-			stage.update();
-			return;
-		}
-		// Embión: si soltás fuerte, sigue unas vueltas y desacelera suave.
-		if (Math.abs(velocity) > 0.015) {
-			setFrame(currentFrame + velocity);
-			velocity *= 0.93;
-		} else {
-			velocity = 0;
-			// Freno final al frame 31.
-			var diff = REST_FRAME - currentFrame;
-			if (Math.abs(diff) > 0.15) setFrame(currentFrame + diff * 0.16);
-			else setFrame(REST_FRAME);
-		}
-		stage.update();
-	});
+	showOnly(1);
+	applyFrame();
+}
 </script>
 <!-- write your code here -->
 </head>
-<body onload="init();" style="margin:0px; overflow:hidden; touch-action:none; background:#fff;">
-	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1080px; height:1920px; position:absolute; left:0; top:0; overflow:hidden; touch-action:none;">
+<body onload="init();" style="margin:0; overflow:hidden; background:#ffffff; touch-action:none;">
+	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1080px; height:1920px">
 		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
 		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
 		</div>
