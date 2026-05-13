@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<!--
+	NOTES:
+	1. All tokens are represented by '$' sign in the template.
+	2. You can write your code only wherever mentioned.
+	3. All occurrences of existing tokens will be replaced by their appropriate values.
+	4. Blank lines will be removed automatically.
+	5. Remove unnecessary comments before creating your template.
+-->
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="authoring-tool" content="Adobe_Animate_CC">
+<title>avion2</title>
+<!-- write your code here -->
+<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+<script src="avion2.js"></script>
+<script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+function init() {
+	canvas = document.getElementById("canvas");
+	anim_container = document.getElementById("animation_container");
+	dom_overlay_container = document.getElementById("dom_overlay_container");
+	var comp=AdobeAn.getComposition("9EB062EA1B1A418DB3F8466E5102B28B");
+	var lib=comp.getLibrary();
+	var loader = new createjs.LoadQueue(false);
+	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
+	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
+	var lib=comp.getLibrary();
+	loader.loadManifest(lib.properties.manifest);
+}
+function handleFileLoad(evt, comp) {
+	var images=comp.getImages();	
+	if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }	
+}
+function handleComplete(evt,comp) {
+	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	var queue = evt.target;
+	var ssMetadata = lib.ssMetadata;
+	for(i=0; i<ssMetadata.length; i++) {
+		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
+	}
+	exportRoot = new lib.avion2();
+	stage = new lib.Stage(canvas);	
+	//Registers the "tick" event listener.
+	fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+	}	    
+	//Code to support hidpi screens and responsive scaling.
+	// Responsive propio: escala el escenario completo 1080x1920 sin mover el arte interno.
+	fitStageToPhone();
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+	installAvionInteraction();
+}
+
+function fitStageToPhone() {
+	var baseW = 1080, baseH = 1920;
+	function resize() {
+		var scale = Math.min(window.innerWidth / baseW, window.innerHeight / baseH);
+		var w = baseW * scale;
+		var h = baseH * scale;
+		anim_container.style.width = baseW + 'px';
+		anim_container.style.height = baseH + 'px';
+		anim_container.style.transformOrigin = '0 0';
+		anim_container.style.transform = 'scale(' + scale + ')';
+		anim_container.style.position = 'absolute';
+		anim_container.style.left = Math.round((window.innerWidth - w) / 2) + 'px';
+		anim_container.style.top = Math.round((window.innerHeight - h) / 2) + 'px';
+		dom_overlay_container.style.width = baseW + 'px';
+		dom_overlay_container.style.height = baseH + 'px';
+	}
+	window.addEventListener('resize', resize);
+	window.addEventListener('orientationchange', resize);
+	resize();
+}
+
+function installAvionInteraction() {
+	var holder = exportRoot && exportRoot.instance;
+	if (!holder || !holder.s_1 || !holder.s_2 || !holder.s_3) {
+		setTimeout(installAvionInteraction, 60);
+		return;
+	}
+
+	var clips = [holder.s_1, holder.s_2, holder.s_3];
+	var frameCount = 50;
+	var currentFrame = 30; // Animate frame 31, zero-based para CreateJS.
+	var velocity = 0;
+	var dragging = false;
+	var lastX = 0, lastY = 0, lastT = Date.now();
+	var verticalMode = 1; // 0 arriba/S1, 1 medio/S2, 2 abajo/S3
+	var pixelsPerFrame = 12;
+
+	function safeFrame(n) {
+		n = Math.round(n) % frameCount;
+		if (n < 0) n += frameCount;
+		return n;
+	}
+	function showOnly(mode) {
+		verticalMode = Math.max(0, Math.min(2, mode));
+		clips[0].visible = verticalMode === 0;
+		clips[1].visible = verticalMode === 1;
+		clips[2].visible = verticalMode === 2;
+		clips.forEach(function(mc) {
+			mc.alpha = 1;
+			mc.paused = true;
+			mc.mouseEnabled = false;
+		});
+	}
+	function applyFrame() {
+		currentFrame = safeFrame(currentFrame);
+		clips.forEach(function(mc) {
+			mc.gotoAndStop(currentFrame);
+			mc.paused = true;
+			mc.alpha = 1;
+		});
+		showOnly(verticalMode);
+	}
+	function chooseVertical(stageY) {
+		var p = holder.globalToLocal(stage.mouseX, stageY);
+		// Ascensor relativo al centro original del MovieClip, no al alto total del celular.
+		if (p.y < -70) return 0;
+		if (p.y > 70) return 2;
+		return 1;
+	}
+	function pointerXY(evt) {
+		return {x: evt.stageX, y: evt.stageY};
+	}
+
+	stage.enableMouseOver(0);
+	canvas.style.touchAction = 'none';
+	canvas.addEventListener('touchmove', function(e){ e.preventDefault(); }, {passive:false});
+
+	stage.on('stagemousedown', function(evt) {
+		dragging = true;
+		var p = pointerXY(evt);
+		lastX = p.x; lastY = p.y; lastT = Date.now();
+		velocity = 0;
+		verticalMode = chooseVertical(p.y);
+		applyFrame();
+	});
+	stage.on('stagemousemove', function(evt) {
+		if (!dragging) return;
+		var p = pointerXY(evt);
+		var now = Date.now();
+		var dx = p.x - lastX;
+		var dt = Math.max(16, now - lastT);
+		currentFrame += dx / pixelsPerFrame;
+		velocity = (dx / pixelsPerFrame) * (16 / dt);
+		verticalMode = chooseVertical(p.y);
+		lastX = p.x; lastY = p.y; lastT = now;
+		applyFrame();
+	});
+	stage.on('stagemouseup', function() { dragging = false; });
+
+	createjs.Ticker.addEventListener('tick', function() {
+		if (!dragging && Math.abs(velocity) > 0.002) {
+			currentFrame += velocity;
+			velocity *= 0.94;
+			applyFrame();
+		}
+	});
+
+	showOnly(1);
+	applyFrame();
+}
+</script>
+<!-- write your code here -->
+</head>
+<body onload="init();" style="margin:0; overflow:hidden; background:#ffffff; touch-action:none;">
+	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1080px; height:1920px">
+		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
+		</div>
+	</div>
+</body>
+</html>
