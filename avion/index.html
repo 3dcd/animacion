@@ -13,108 +13,7 @@
 <meta name="authoring-tool" content="Adobe_Animate_CC">
 <title>avion2</title>
 <!-- write your code here -->
-<script src="https://code.createjs.com/1.0.0/createjs.min.js">
-function installPlaneDragInteraction() {
-	if (!stage || !exportRoot || !exportRoot.instance) return;
-
-	var plane = exportRoot.instance;
-	var s1 = plane.s_1;
-	var s2 = plane.s_2;
-	var s3 = plane.s_3;
-	if (!s1 || !s2 || !s3) return;
-
-	// Dejamos la línea de tiempo principal quieta y controlamos sólo los frames de S1/S2/S3.
-	if (exportRoot.stop) exportRoot.stop();
-	if (plane.stop) plane.stop();
-
-	var totalFrames = 50;
-	var framePos = 0;
-	var velocity = 0;
-	var dragging = false;
-	var lastStageX = 0;
-	var lastStageY = 0;
-	var startStageY = 0;
-	var activeLayer = 1;
-
-	// Ajustes finos para sensación móvil.
-	var dragSensitivity = 0.18;     // Más alto = gira más rápido al arrastrar.
-	var inertiaFriction = 0.94;     // Más alto = más embión.
-	var velocityBoost = 1.15;       // Fuerza del impulso al soltar.
-	var stopThreshold = 0.015;
-	var verticalZone = 90;          // Zona media para mostrar S2.
-
-	function setVisibleLayer(layer) {
-		activeLayer = layer;
-		s1.visible = layer === 1;
-		s2.visible = layer === 2;
-		s3.visible = layer === 3;
-	}
-
-	function updateLayerByY(stageY) {
-		var dy = stageY - startStageY;
-		if (dy < -verticalZone) {
-			setVisibleLayer(3); // dedo hacia arriba
-		} else if (dy > verticalZone) {
-			setVisibleLayer(1); // dedo hacia abajo
-		} else {
-			setVisibleLayer(2); // punto medio
-		}
-	}
-
-	function wrapFrame(value) {
-		value = value % totalFrames;
-		return value < 0 ? value + totalFrames : value;
-	}
-
-	function renderFrame() {
-		var frame = Math.round(wrapFrame(framePos));
-		if (s1.gotoAndStop) s1.gotoAndStop(frame);
-		if (s2.gotoAndStop) s2.gotoAndStop(frame);
-		if (s3.gotoAndStop) s3.gotoAndStop(frame);
-	}
-
-	setVisibleLayer(1);
-	renderFrame();
-	stage.enableMouseOver(0);
-	createjs.Touch.enable(stage, false, true);
-	stage.mouseMoveOutside = true;
-
-	stage.on("stagemousedown", function(evt) {
-		dragging = true;
-		lastStageX = evt.stageX;
-		lastStageY = evt.stageY;
-		startStageY = evt.stageY;
-		velocity = 0;
-		updateLayerByY(evt.stageY);
-		renderFrame();
-	});
-
-	stage.on("stagemousemove", function(evt) {
-		if (!dragging) return;
-		var dx = evt.stageX - lastStageX;
-		framePos = wrapFrame(framePos + dx * dragSensitivity);
-		velocity = dx * dragSensitivity * velocityBoost;
-		lastStageX = evt.stageX;
-		lastStageY = evt.stageY;
-		updateLayerByY(evt.stageY);
-		renderFrame();
-	});
-
-	stage.on("stagemouseup", function(evt) {
-		dragging = false;
-		if (evt) updateLayerByY(evt.stageY);
-	});
-
-	createjs.Ticker.on("tick", function() {
-		if (!dragging && Math.abs(velocity) > stopThreshold) {
-			framePos = wrapFrame(framePos + velocity);
-			velocity *= inertiaFriction;
-			renderFrame();
-		}
-	});
-}
-
-</script>
+<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
 <script src="avion2.js"></script>
 <script>
 var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
@@ -152,42 +51,127 @@ function handleComplete(evt,comp) {
 		createjs.Ticker.addEventListener("tick", stage);
 	}	    
 	//Code to support hidpi screens and responsive scaling.
-	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);	
+	AdobeAn.makeResponsive(false,'both',false,1,[canvas,anim_container,dom_overlay_container]);	
 	AdobeAn.compositionLoaded(lib.properties.id);
 	fnStartAnimation();
-	installPlaneDragInteraction();
+	setupAvionTouchControl();
 }
 
+function setupAvionTouchControl() {
+	// Control externo: NO toca los símbolos gráficos internos.
+	var root = exportRoot;
+	var avion = root && root.instance; // Símbolo30: contiene s_1, s_2, s_3
+	if (!root || !avion || !avion.s_1 || !avion.s_2 || !avion.s_3) return;
+
+	var FRAME_COUNT = 50;
+	var REST_FRAME = 30; // 0-based: frame 31 de Animate
+	var currentFrame = REST_FRAME;
+	var velocity = 0;
+	var isDragging = false;
+	var lastX = 0, lastY = 0, startY = 0;
+	var viewMode = 2; // 1=s_1 arriba, 2=s_2 medio, 3=s_3 abajo
+	var stageW = 1080, stageH = 1920;
+	var baseX = 540, baseY = 960;
+
+	root.stop();
+	avion.stop();
+	avion.mouseEnabled = true;
+	avion.cursor = 'grab';
+	canvas.style.touchAction = 'none';
+	canvas.style.cursor = 'grab';
+
+	function wrapFrame(n) {
+		n = Math.round(n) % FRAME_COUNT;
+		return n < 0 ? n + FRAME_COUNT : n;
+	}
+	function setPose(mode) {
+		viewMode = mode;
+		avion.s_1.visible = mode === 1;
+		avion.s_2.visible = mode === 2;
+		avion.s_3.visible = mode === 3;
+		avion.s_1.alpha = mode === 1 ? 1 : 0;
+		avion.s_2.alpha = mode === 2 ? 1 : 0;
+		avion.s_3.alpha = mode === 3 ? 1 : 0;
+	}
+	function setFrame(frame) {
+		currentFrame = wrapFrame(frame);
+		avion.gotoAndStop(currentFrame);
+		avion.s_1.gotoAndStop(currentFrame);
+		avion.s_2.gotoAndStop(currentFrame);
+		avion.s_3.gotoAndStop(currentFrame);
+		setPose(viewMode);
+	}
+	function setPoseFromVertical(globalY) {
+		var dy = globalY - startY;
+		var threshold = Math.max(65, stageH * 0.055);
+		if (dy < -threshold) setPose(1);       // dedo hacia arriba -> S1
+		else if (dy > threshold) setPose(3);   // dedo hacia abajo -> S3
+		else setPose(2);                       // zona media -> S2
+	}
+	function centerForMobile() {
+		var w = window.innerWidth || document.documentElement.clientWidth || stageW;
+		var h = window.innerHeight || document.documentElement.clientHeight || stageH;
+		var scale = Math.min(w / stageW, h / stageH);
+		anim_container.style.transformOrigin = '0 0';
+		anim_container.style.transform = 'scale(' + scale + ')';
+		anim_container.style.left = ((w - stageW * scale) / 2) + 'px';
+		anim_container.style.top = ((h - stageH * scale) / 2) + 'px';
+	}
+	window.addEventListener('resize', centerForMobile);
+	centerForMobile();
+
+	// Estado inicial: frame 31, una sola visual visible.
+	avion.x = baseX;
+	avion.y = baseY;
+	setPose(2);
+	setFrame(REST_FRAME);
+
+	stage.on('stagemousedown', function(evt) {
+		isDragging = true;
+		velocity = 0;
+		lastX = evt.stageX;
+		lastY = evt.stageY;
+		startY = evt.stageY;
+		canvas.style.cursor = 'grabbing';
+		setPoseFromVertical(evt.stageY);
+	});
+	stage.on('stagemousemove', function(evt) {
+		if (!isDragging) return;
+		var dx = evt.stageX - lastX;
+		velocity = dx * 0.38;
+		setFrame(currentFrame + dx * 0.035);
+		setPoseFromVertical(evt.stageY);
+		lastX = evt.stageX;
+		lastY = evt.stageY;
+	});
+	stage.on('stagemouseup', function(evt) {
+		isDragging = false;
+		canvas.style.cursor = 'grab';
+	});
+
+	createjs.Ticker.on('tick', function() {
+		if (isDragging) {
+			stage.update();
+			return;
+		}
+		// Embión: si soltás fuerte, sigue unas vueltas y desacelera suave.
+		if (Math.abs(velocity) > 0.015) {
+			setFrame(currentFrame + velocity);
+			velocity *= 0.93;
+		} else {
+			velocity = 0;
+			// Freno final al frame 31.
+			var diff = REST_FRAME - currentFrame;
+			if (Math.abs(diff) > 0.15) setFrame(currentFrame + diff * 0.16);
+			else setFrame(REST_FRAME);
+		}
+		stage.update();
+	});
 </script>
 <!-- write your code here -->
-<style>
-	html, body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-		overflow: hidden;
-		background: #ffffff;
-		touch-action: none;
-		overscroll-behavior: none;
-	}
-	#animation_container {
-		position: absolute;
-		left: 50%;
-		top: 50%;
-		transform: translate(-50%, -50%);
-		transform-origin: center center;
-		overflow: hidden;
-	}
-	#canvas {
-		touch-action: none;
-		user-select: none;
-		-webkit-user-select: none;
-		-webkit-touch-callout: none;
-	}
-</style>
 </head>
-<body onload="init();" style="margin:0px;">
-	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1080px; height:1920px">
+<body onload="init();" style="margin:0px; overflow:hidden; touch-action:none; background:#fff;">
+	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1080px; height:1920px; position:absolute; left:0; top:0; overflow:hidden; touch-action:none;">
 		<canvas id="canvas" width="1080" height="1920" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
 		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1080px; height:1920px; position: absolute; left: 0px; top: 0px; display: block;">
 		</div>
